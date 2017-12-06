@@ -1,0 +1,56 @@
+# name=freeTCE-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "E.dom"
+.include "I.dom"
+.include "M.dom"
+
+.bddvarorder E0_I0_C0xC1_A0_M0xM1
+
+###
+# Relations
+###
+freeE(e0:E0) input
+freeInnerClassAccessInv(i0:I0) input
+
+relevantTCM(t0:A0,c0:C0,m0:M0) input
+CICM(c0:C0,i0:I0,c1:C1,m1:M0) input
+ME(m0:M0,e0:E0) input
+MI(m0:M0,i0:I0) input
+
+initM(m:M0) input
+
+###
+# Constraints
+###
+
+#convert freeE to the format of freeTCE.
+freeTCE_candidate(t,c,e) :- \
+	freeE(e), ME(m,e), \
+	relevantTCM(t,c,m).
+
+#include the access$.. for free into freeTCE.
+freeTCE_candidate(t,c,e) :- \
+	relevantTCM(t,c0,m0), \
+	MI(m0,i0), freeInnerClassAccessInv(i0), \
+	CICM(c0,i0,c,m), ME(m,e).
+	
+###
+
+# exclude initial caller method for freeTCE
+freeTCE_ExcludeM(t,c,e) :- \
+	freeTCE_candidate(t,c,e), \
+	ME(caller,e), !initM(caller).
+
+###
+
+# freeTCE(t,c,e)
+# t: thread
+# c: context
+# e: free (set field to null) statement
+
+freeTCE(t0:A0,c0:C0,e0:E0) output
+freeTCE(t,c,e) :- freeTCE_ExcludeM(t,c,e).
+
+###

@@ -1,0 +1,71 @@
+# name=MHB_AsyncTask-dlog
+
+.include "C.dom"
+.include "M.dom"
+.include "A.dom"
+
+.bddvarorder C0xC1_M0xM1_A0xA1
+
+###
+# Relations
+###
+
+asyncTaskThread_DIB(t:A0) input
+asyncTaskThread_onPre(t:A0) input
+asyncTaskThread_onPost(t:A0) input
+asyncTaskThread_onProgress(t:A0) input
+
+relevantTCM(t:A0,c:C0,m:M0) input
+threadAOCM(t:A0,o:C0,c:C1,m:M0) input
+CMCM(c0:C0,m0:M0,c1:C1,m1:M1) input
+
+MHB_asyncTask(t0:A0,t1:A1) output
+
+###
+
+###
+# Constraints
+###
+
+# asyncTaskThreadReachable(t0,t1)
+# t0 is the thread of asyncTask.doInBackground
+# t1 is the threads can be reached by t0
+
+asyncTaskThreadReachable(t0,t1):- \
+	asyncTaskThread_DIB(t0), \
+	relevantTCM(t0,c,m), CMCM(c,m,c1,m1), \
+	threadAOCM(t1,_,c1,m1).
+	
+asyncTaskThreadReachable(t0,t1):- \
+	asyncTaskThreadReachable(t0,t2), \
+	relevantTCM(t2,c2,m2), CMCM(c2,m2,c1,m1), \
+	threadAOCM(t1,_,c1,m1).
+
+###
+
+# onPre -> DIB	
+MHB_asyncTask(t0,t1):- \
+	asyncTaskThread_onPre(t0), asyncTaskThread_DIB(t1), \
+	asyncTaskThreadReachable(t1,t0).
+
+# DIB -> onPost
+MHB_asyncTask(t0,t1):- \
+	asyncTaskThread_DIB(t0), asyncTaskThread_onPost(t1), \
+	asyncTaskThreadReachable(t0,t1).
+
+# onPre -> onProgress	
+MHB_asyncTask(t0,t1):- \
+	asyncTaskThread_onPre(t0), asyncTaskThread_DIB(t), asyncTaskThread_onProgress(t1), \
+	asyncTaskThreadReachable(t,t0), asyncTaskThreadReachable(t,t1).
+
+# onProgress -> onPost
+MHB_asyncTask(t0,t1):- \
+	asyncTaskThread_DIB(t), asyncTaskThread_onPost(t1), asyncTaskThread_onProgress(t0), \
+	asyncTaskThreadReachable(t,t0), asyncTaskThreadReachable(t,t1).
+
+# onPre -> onPost
+MHB_asyncTask(t0,t1):- \
+	asyncTaskThread_onPre(t0), asyncTaskThread_DIB(t), asyncTaskThread_onPost(t1), \
+	asyncTaskThreadReachable(t,t0), asyncTaskThreadReachable(t,t1).
+	
+###

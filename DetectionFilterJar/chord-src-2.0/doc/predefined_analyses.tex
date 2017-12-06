@@ -1,0 +1,70 @@
+\xname{predefined_analyses}
+\chapter{Predefined Analyses}
+\label{chap:predefined-analyses}
+
+This chapter describes various predefined analyses in Chord.
+
+\section{Static Datarace Analysis}
+
+To run Chord's static datarace analysis, run the following
+command in Chord's {\tt main/} directory:
+
+\begin{verbatim}
+    prompt> ant -Dchord.work.dir=<...> -Dchord.run.analyses=datarace-java run
+\end{verbatim}
+
+where {\tt <...>} denotes the absolute or relative path of a directory
+containing a file named \code{chord.properties} which defines
+properties \code{chord.main.class}, \code{chord.class.path}, and
+\code{chord.src.path}.  See Section \ref{sec:program-props} for the
+meaning of these properties.
+
+Directory \code{main/examples/datarace_test/} provides a toy Java
+program on which one can run the datarace analysis.  First run {\tt
+  ant} in that directory (in order to compile the program's {\tt
+  .java} files to {\tt .class} files) and then run the above command
+in Chord's {\tt main/} directory with {\tt <...>} replaced by
+\code{examples/datarace_test/}.  Upon successful completion, the
+following files should be produced in directory
+\code{examples/datarace_test/chord_output/}:
+
+\begin{itemize}
+\item
+File \code{dataraces_by_fld.html}, listing all dataraces grouped by
+the field on which they occur; all dataraces on the same instance
+field or the same static field are listed in the same group, and so
+are all dataraces on array elements.
+\item
+File \code{dataraces_by_obj.html}, listing all dataraces grouped by
+the abstract object on whose field they occur; dataraces on all static
+fields are listed in the same group, and so are dataraces on different
+instance fields of the same abstract object.
+\end{itemize}
+
+\section{Static Deadlock Analysis}
+
+To run Chord's static deadlock analysis,  run the following
+command in Chord's {\tt main/} directory:
+
+\begin{verbatim}
+    prompt> ant -Dchord.work.dir=<...> -Dchord.run.analyses=deadlock-java run
+\end{verbatim}
+
+where {\tt <...>} denotes the absolute or relative path of a directory
+containing a file named \code{chord.properties} which defines
+properties \code{chord.main.class}, \code{chord.class.path}, and
+\code{chord.src.path}.  See Section \ref{sec:program-props} for the
+meaning of these properties.
+
+Directory \code{main/examples/deadlock_test/} provides a toy Java
+program on which one can run the deadlock analysis.  First run {\tt
+  ant} in that directory (in order to compile the program's {\tt
+  .java} files to {\tt .class} files) and then run the above command
+in Chord's {\tt main/} directory with {\tt <...>} replaced by
+\code{examples/deadlock_test/}.  Upon successful completion, the
+file \code{deadlocks.html} should be produced in directory
+\code{examples/deadlock_test/chord_output/}.
+
+\section{May-Alias and Call-Graph Analyses}
+
+{\bf Under Construction}

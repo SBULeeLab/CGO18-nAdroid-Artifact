@@ -1,0 +1,136 @@
+# name=drrace-filters-sound-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "E.dom"
+.include "K.dom"
+
+.bddvarorder E0_E1_C0xC1_A0_A1_K0
+
+###
+# Relations
+###
+
+uaf_TInOneComponent(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+
+bothRunOnLooperThread(t1:A0,t2:A1) input
+
+###
+# Constraints
+###
+
+###################################################################################
+# Filter: use for comparison
+
+EForCmp(e0:E0) input
+
+###
+
+uaf_UsedForCmp(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_UsedForCmp(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	EForCmp(e1).
+
+###
+
+uaf_UsedForCmp_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_UsedForCmp_Excluded(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	!uaf_UsedForCmp(t1,c1,e1,t2,c2,e2).
+
+###################################################################################
+
+# Filter: ifGuard
+
+ifGuardE(e0:E0,e1:E1) input
+
+###
+
+# t1 and t2 should both run on the looper thread
+
+uaf_IfGuardE(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_IfGuardE(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	ifGuardE(_,e1), \
+	bothRunOnLooperThread(t1,t2).
+
+###
+
+uaf_IfGuardE_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_IfGuardE_Excluded(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	!uaf_IfGuardE(t1,c1,e1,t2,c2,e2).
+
+###################################################################################
+
+# Filter: intra-Allocation
+
+allocE(k0:K0,e0:E0,e1:E1) input
+
+###
+
+# t1 and t2 should both run on the looper thread
+
+uaf_AllocE(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_AllocE(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	allocE(0,_,e1), \
+	bothRunOnLooperThread(t1,t2).
+
+###
+
+uaf_AllocE_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_AllocE_Excluded(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	!uaf_AllocE(t1,c1,e1,t2,c2,e2).
+	
+###################################################################################
+
+# Filter: Must-Happen-Before
+
+MHB(t1:A0,t2:A1) input
+
+###
+
+uaf_MHB(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_MHB(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	MHB(t1,t2).
+
+###
+
+uaf_MHB_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_MHB_Excluded(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	!uaf_MHB(t1,c1,e1,t2,c2,e2).
+
+###################################################################################
+
+# Filter: lock with ifGuard and intra-allocation
+
+guardedE(t:A0,c1:C0,e:E0,c2:C1) input
+
+###
+
+uaf_lock(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+
+uaf_lock(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	!bothRunOnLooperThread(t1,t2), \
+	ifGuardE(e0,e1), e0!=e1, \
+	guardedE(t1,c1,e0,o), guardedE(t1,c1,e1,o), guardedE(t2,c2,e2,o).
+	
+uaf_lock(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	!bothRunOnLooperThread(t1,t2), \
+	allocE(0,e0,e1), \
+	guardedE(t1,c1,e0,o), guardedE(t1,c1,e1,o), guardedE(t2,c2,e2,o).
+
+###
+
+uaf_lock_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_lock_Excluded(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	!uaf_lock(t1,c1,e1,t2,c2,e2).
+
+###################################################################################

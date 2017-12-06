@@ -1,0 +1,55 @@
+# name=TInOneComponent-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "M.dom"
+.include "T.dom"
+
+.bddvarorder M0xM1_A0xA1_C0_T0
+
+###
+# Relations
+###
+componentTCM(component:T0,t0:A0,c0:C0,m0:M0) input
+
+threadReachable(t0:A0,t1:A1) input
+
+###
+# Constraints
+###
+# TInOneComponent(component,t)
+# component: type of android component
+# t: threads can be reached by entry callback of the component
+TInOneComponent(component:T0,t1:A0) output
+
+TInOneComponent(component,t1) :- \
+	componentTCM(component,t1,_,_).
+	
+TInOneComponent(component,t2) :- \
+	TInOneComponent(component,t1), \
+	threadReachable(t1,t2).
+
+###
+# TInOneComponentPair(t1,t2)
+# t1 and t2 are  threads can be reached by entry callback of the same component
+# but t1!=t2
+TInOneComponentPair(t1:A0,t2:A1) output
+	
+TInOneComponentPair(t1,t2) :- \
+	TInOneComponent(component,t1), \
+	TInOneComponent(component,t2), \
+	t1!=t2.
+
+###
+
+# entryCallbackInOneComponentPair(m1,m2)
+# m1 and m2 are entry callback of the same component
+# but m1!=m2
+
+entryCallbackInOneComponentPair(m1:M0,m2:M1) output
+entryCallbackInOneComponentPair(m1,m2) :- \
+	componentTCM(component,_,_,m1), \
+	componentTCM(component,_,_,m2), \
+	m1!=m2.
+
+###

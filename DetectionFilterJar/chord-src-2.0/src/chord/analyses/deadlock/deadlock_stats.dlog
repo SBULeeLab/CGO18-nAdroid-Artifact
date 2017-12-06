@@ -1,0 +1,32 @@
+# Copyright (c) 2008-2010, Intel Corporation.
+# Copyright (c) 2006-2007, The Trustees of Stanford University.
+# All rights reserved.
+# Licensed under the terms of the New BSD License.
+
+# Author: Mayur Naik (mhn@cs.stanford.edu)
+# name=deadlock-stats-dlog
+
+.include "N.dom"
+.include "C.dom"
+.include "L.dom"
+.include "A.dom"
+
+.bddvarorder A0xA1_L0xL1xL2xL3_C0_N0_N3_N1_N2
+
+# do cId - XYZ/2
+
+###
+# Relations
+###
+
+deadlock(t1:A0,l1:N0,l2:N1,t2:A1,l3:N2,l4:N3) input
+NL(n:N0,l:L0) input
+ctxtInsDeadlock(l1:L0,l2:L1,l3:L2,l4:L3) output
+negDeadlock(l1:L0,l2:L1,l3:L2,l4:L3) output
+XYZ(l1:L0,l2:L1,l3:L2,l4:L3) output
+
+ctxtInsDeadlock(l1,l2,l3,l4) :- deadlock(_,n1,n2,_,n3,n4), NL(n1,l1), NL(n2,l2), NL(n3,l3), NL(n4,l4).
+
+negDeadlock(l1,l2,l3,l4) :- ctxtInsDeadlock(l1,l2,l3,l4), l3=l1, l4=l2.
+
+XYZ(l1,l2,l3,l4) :- ctxtInsDeadlock(l1,l2,l3,l4), ctxtInsDeadlock(l3,l4,l1,l2), !negDeadlock(l1,l2,l3,l4).

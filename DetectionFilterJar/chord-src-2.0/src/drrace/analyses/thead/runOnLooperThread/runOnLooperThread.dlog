@@ -1,0 +1,134 @@
+# name=runOnLooperThread-dlog
+
+.include "A.dom"
+.include "T.dom"
+.include "C.dom"
+.include "M.dom"
+
+.bddvarorder C0_M0_A0xA1_T0
+
+###
+# Relations
+###
+
+# runOnLooperThread(t)
+# t can be:
+# asyncTaskThread_onPre
+# asyncTaskThread_onPost
+# asyncTaskThread_onProgress
+# handleMessageThread
+# servicConnectedThread
+# serviceDisconnectedThread
+# broadcastReceiverThread
+# handlePostRunnableThread
+# entry point thread
+runOnLooperThread(t:A0) output
+
+# bothRunOnLooperThread(t1,t2)
+# t1 and t2 both run on looper thread, and t1 != t2.
+bothRunOnLooperThread(t1:A0,t2:A1) output
+
+# Those relations are used for data race classification
+threadEntryEvent(t:A0) output
+threadPostEvent(t:A0) output
+threadEvent(t:A0) output
+threadNative(t:A0) output
+
+###
+# Constraints
+###
+################################################################################
+
+#asyncTaskThread
+
+###
+
+asyncTaskThread_onPre(t:A0) input
+
+#PreExeRunnableMethod
+threadPostEvent(t) :- asyncTaskThread_onPre(t).
+
+###
+
+asyncTaskThread_onPost(t:A0) input
+
+#PostExeRunnableMethod
+threadPostEvent(t) :- asyncTaskThread_onPost(t).
+
+###
+
+asyncTaskThread_onProgress(t:A0) input
+	
+#UpdateRunnableMethod
+threadPostEvent(t) :- asyncTaskThread_onProgress(t).
+
+################################################################################
+
+#handleMessageThread
+handleMessageThread(t:A0) input
+	
+#handleMessageRunnable
+threadPostEvent(t) :- handleMessageThread(t).
+
+################################################################################
+
+#servicConnectedThread
+servicConnectedThread(t:A0) input
+
+#onServiceConnectedRunnable
+threadPostEvent(t) :- servicConnectedThread(t).
+
+###
+
+#serviceDisconnectedThread
+serviceDisconnectedThread(t:A0) input
+	
+#onServiceDisconnectedRunnable
+threadPostEvent(t) :- serviceDisconnectedThread(t).
+
+################################################################################
+
+#broadcastReceiverThread
+broadcastReceiverThread(t:A0) input
+
+#onReceiveRunnable
+threadPostEvent(t) :- broadcastReceiverThread(t).
+
+################################################################################
+
+#handlePostRunnableThread
+handlePostRunnableThread(t:A0) input
+
+#handlePostRunnable
+threadPostEvent(t) :- handlePostRunnableThread(t).
+
+################################################################################
+
+#componentTCM (entry points threads)
+componentTCM(component:T0,t0:A0,c0:C0,m0:M0) input
+
+#componentTCM
+threadEntryEvent(t) :- componentTCM(_,t,_,_).
+
+################################################################################
+
+threadEvent(t) :- threadEntryEvent(t).
+threadEvent(t) :- threadPostEvent(t).
+
+################################################################################
+
+relevantTCM(t:A0,c:C0,m:M0) input
+
+threadNative(t) :- relevantTCM(t,_,_), !threadEvent(t).
+
+################################################################################
+
+runOnLooperThread(t) :- threadEvent(t).
+	
+################################################################################
+
+bothRunOnLooperThread(t1,t2) :- \
+	 runOnLooperThread(t1), runOnLooperThread(t2), \
+	 t1!=t2.
+
+################################################################################

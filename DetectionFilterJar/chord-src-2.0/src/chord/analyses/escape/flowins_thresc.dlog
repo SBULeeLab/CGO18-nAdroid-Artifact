@@ -1,0 +1,58 @@
+# Copyright (c) 2008-2010, Intel Corporation.
+# Copyright (c) 2006-2007, The Trustees of Stanford University.
+# All rights reserved.
+# Licensed under the terms of the New BSD License.
+
+# Author: Mayur Naik (mhn@cs.stanford.edu)
+# name=flowins-thresc-dlog
+
+.include "M.dom"
+.include "V.dom"
+.include "C.dom"
+.include "P.dom"
+.include "Z.dom"
+.include "F.dom"
+.include "E.dom"
+.include "T.dom"
+
+.bddvarorder E0_M0xP0_V0_C0_F0_C1_Z0_T0
+
+###
+# Relations
+###
+
+CVC(c1:C0,v:V0,c2:C1) input
+FC(f:F,c:C) input
+CFC(c1:C,f:F,c2:C) input
+MmethArg(m:M,z:Z,v:V) input
+escO(o:C) output
+MV(m:M,v:V) input
+MP(m:M,p:P) input
+EV(e:E,v:V) input
+escCPVO(c:C,p:P,v:V,o:C) output
+reachableCM(c:C,m:M) input
+ME(m:M,e:E) input
+checkExcludedT(t:T) input
+TM(t:T,m:M) input
+
+escCE(c:C,e:E)
+flowinsVisitedE(e:E) output
+flowinsEscE(e:E) output
+flowinsLocE(e:E) output
+queryE(e:E) output
+
+###
+# Constraints
+###
+
+escO(o) :- FC(_,o).
+escO(o) :- MmethArg(1,0,v), CVC(_,v,o).
+escO(o2) :- CFC(o1,_,o2), escO(o1).
+
+escCPVO(c,p,v,o) :- CVC(c,v,o), MV(m,v), MP(m,p), escO(o). split
+escCE(c,e) :- EV(e,v), CVC(c,v,o), escO(o).
+
+queryE(e) :- !checkExcludedT(t), TM(t,m), ME(m,e), EV(e,_). # All queries we care about
+flowinsVisitedE(e) :- queryE(e), ME(m,e), reachableCM(_,m). # Things which are local
+flowinsEscE(e) :- queryE(e), escCE(_,e). # Escaping
+flowinsLocE(e) :- queryE(e), !flowinsEscE(e). # Local = not escaping

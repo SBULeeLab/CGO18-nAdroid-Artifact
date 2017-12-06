@@ -1,0 +1,147 @@
+.include "A.dom"
+.include "C.dom"
+.include "E.dom"
+.include "K.dom"
+
+.bddvarorder E0xE1_C0xC1_A0xA1_K0 
+
+###
+# Relations
+###
+
+# sound filters
+uaf_UsedForCmp(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_IfGuardE(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_AllocE(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_MHB(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_lock(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+
+# unsound filters
+uaf_UsedForRtn(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_UsedForParam(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_maybeAllocE(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_PHB(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_RHB(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_FHB(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_IHB(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+
+uaf_TInOneComponent(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_sound_filters_applied(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_ToBeReported(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+
+threadEvent(t:A0) input
+
+bothRunOnLooperThread(t1:A0,t2:A1) input
+ifGuardE(e0:E0,e1:E1) input
+allocE(k0:K0,e0:E0,e1:E1) input
+guardedE(t:A0,c1:C0,e:E0,c2:C1) input
+
+# Those relations are used for data race classification
+threadEntryEvent(t:A0) input
+threadPostEvent(t:A0) input
+threadNative(t:A0) input
+uaf_EntryEvent_EntryEvent(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input 
+uaf_EntryEvent_PostEvent(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_PostEvent_PostEvent(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_Event_Thread_Reach(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_Event_Thread_NonReach(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+
+
+###
+# Constraints
+###
+
+# sound - separate filtered
+
+IG(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+IG(t1,c1,e1,t2,c2,e2) :- uaf_UsedForCmp(t1,c1,e1,t2,c2,e2).
+IG(t1,c1,e1,t2,c2,e2) :- uaf_IfGuardE(t1,c1,e1,t2,c2,e2).
+IG(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	!bothRunOnLooperThread(t1,t2), \
+	ifGuardE(e0,e1), e0!=e1, \
+	guardedE(t1,c1,e0,o), guardedE(t1,c1,e1,o), guardedE(t2,c2,e2,o).
+
+IA(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+IA(t1,c1,e1,t2,c2,e2) :- uaf_AllocE(t1,c1,e1,t2,c2,e2).
+IA(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	!bothRunOnLooperThread(t1,t2), \
+	allocE(0,e0,e1), \
+	guardedE(t1,c1,e0,o), guardedE(t1,c1,e1,o), guardedE(t2,c2,e2,o).
+
+MHB(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+MHB(t1,c1,e1,t2,c2,e2) :- uaf_MHB(t1,c1,e1,t2,c2,e2).
+
+LGA(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+LGA(t1,c1,e1,t2,c2,e2) :- uaf_lock(t1,c1,e1,t2,c2,e2).
+
+###
+
+# unsound - separate filtered
+
+RHB(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+RHB(t1,c1,e1,t2,c2,e2) :- \
+    uaf_RHB(t1,c1,e1,t2,c2,e2), \
+    uaf_sound_filters_applied(t1,c1,e1,t2,c2,e2).
+
+CHB(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+CHB(t1,c1,e1,t2,c2,e2) :- \
+    uaf_FHB(t1,c1,e1,t2,c2,e2), \
+    uaf_sound_filters_applied(t1,c1,e1,t2,c2,e2).
+CHB(t1,c1,e1,t2,c2,e2) :- \
+    uaf_IHB(t1,c1,e1,t2,c2,e2), \
+    uaf_sound_filters_applied(t1,c1,e1,t2,c2,e2).
+
+PHB(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+PHB(t1,c1,e1,t2,c2,e2) :- \
+    uaf_PHB(t1,c1,e1,t2,c2,e2), \
+    uaf_sound_filters_applied(t1,c1,e1,t2,c2,e2).
+
+mayHB(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+mayHB(t1,c1,e1,t2,c2,e2) :- PHB(t1,c1,e1,t2,c2,e2).
+mayHB(t1,c1,e1,t2,c2,e2) :- RHB(t1,c1,e1,t2,c2,e2).
+mayHB(t1,c1,e1,t2,c2,e2) :- CHB(t1,c1,e1,t2,c2,e2).
+
+MA(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+MA(t1,c1,e1,t2,c2,e2) :- \
+    uaf_maybeAllocE(t1,c1,e1,t2,c2,e2), \
+    uaf_sound_filters_applied(t1,c1,e1,t2,c2,e2).
+
+UR(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output    
+UR(t1,c1,e1,t2,c2,e2) :- \
+    uaf_UsedForRtn(t1,c1,e1,t2,c2,e2), \
+    uaf_sound_filters_applied(t1,c1,e1,t2,c2,e2).
+UR(t1,c1,e1,t2,c2,e2) :- \
+    uaf_UsedForParam(t1,c1,e1,t2,c2,e2), \
+    uaf_sound_filters_applied(t1,c1,e1,t2,c2,e2).
+    
+TT(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+TT(t1,c1,e1,t2,c2,e2) :- \
+    !threadEvent(t1), !threadEvent(t2), \
+    uaf_sound_filters_applied(t1,c1,e1,t2,c2,e2).
+###
+
+In(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+In(t1,c1,e1,t2,c2,e2) :- uaf_TInOneComponent(t1,c1,e1,t2,c2,e2).
+
+Sound_applied(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+Sound_applied(t1,c1,e1,t2,c2,e2) :- uaf_sound_filters_applied(t1,c1,e1,t2,c2,e2).
+
+Out(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+Out(t1,c1,e1,t2,c2,e2) :- uaf_ToBeReported(t1,c1,e1,t2,c2,e2), !TT(t1,c1,e1,t2,c2,e2).
+
+###
+
+Sound(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+Sound(t1,c1,e1,t2,c2,e2) :- IG(t1,c1,e1,t2,c2,e2).
+Sound(t1,c1,e1,t2,c2,e2) :- IA(t1,c1,e1,t2,c2,e2).
+Sound(t1,c1,e1,t2,c2,e2) :- MHB(t1,c1,e1,t2,c2,e2).
+
+Unsound(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+Unsound(t1,c1,e1,t2,c2,e2) :- mayHB(t1,c1,e1,t2,c2,e2).
+Unsound(t1,c1,e1,t2,c2,e2) :- UR(t1,c1,e1,t2,c2,e2).
+Unsound(t1,c1,e1,t2,c2,e2) :- MA(t1,c1,e1,t2,c2,e2).
+Unsound(t1,c1,e1,t2,c2,e2) :- TT(t1,c1,e1,t2,c2,e2).
+
+###

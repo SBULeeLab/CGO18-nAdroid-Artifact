@@ -1,0 +1,31 @@
+# Copyright (c) 2008-2010, Intel Corporation.
+# Copyright (c) 2006-2007, The Trustees of Stanford University.
+# All rights reserved.
+# Licensed under the terms of the New BSD License.
+
+# Author: Mayur Naik (mhn@cs.stanford.edu)
+# name=threads-dlog
+
+.include "M.dom"
+.include "I.dom"
+.include "C.dom"
+.include "V.dom"
+.include "Z.dom"
+
+.bddvarorder I0xM0_V0_C0xC1_Z0
+
+###
+# Relations
+###
+
+thrOblAbbrCICM(c:C0,i:I0,d:C1,m:M0) input
+MmethArg(m:M0,z:Z0,v:V0) input
+CVC(c:C0,v:V0,o:C1) input
+threadOC(o:C0,c:C1) output
+
+###
+# Constraints
+###
+
+threadOC(o,c) :- MmethArg(1,0,v), thrOblAbbrCICM(_,_,c,1), CVC(c,v,o).
+

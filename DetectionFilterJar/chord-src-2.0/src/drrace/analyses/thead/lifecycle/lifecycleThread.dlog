@@ -1,0 +1,98 @@
+# name=lifecycleThread-dlog
+
+.include "C.dom"
+.include "M.dom"
+.include "A.dom"
+.include "K.dom"
+.include "T.dom"
+
+.bddvarorder M0_A0_C0_K0xK1_T0
+
+###
+# Relations
+###
+lifeCycleCallback(k0:K0,k1:K1,m0:M0) input
+componentTCM(component:T0,t0:A0,c0:C0,m0:M0) input
+
+component_Activity(component:T0) input
+component_Service(component:T0) input
+
+activityOnCreateT(component:T0,t0:A0) output
+activityOnReStartT(component:T0,t0:A0) output
+activityOnStartT(component:T0,t0:A0) output
+activityOnResumeT(component:T0,t0:A0) output
+activityOnPauseT(component:T0,t0:A0) output
+activityOnStopT(component:T0,t0:A0) output
+activityOnDestroyT(component:T0,t0:A0) output
+activityBetweenOnStopOnDestroyT(component:T0,t0:A0) output
+
+activityNonLifecycleT(component:T0,t0:A0) output
+
+serviceOnCreateT(component:T0,t0:A0) output
+serviceOnDestroyT(component:T0,t0:A0) output
+
+###
+
+###
+# Constraints
+###
+
+activityOnCreateT(component,t):- \
+	component_Activity(component), \
+	componentTCM(component,t,_,m), lifeCycleCallback(0,0,m).
+
+activityOnReStartT(component,t):- \
+	component_Activity(component), \
+	componentTCM(component,t,_,m), lifeCycleCallback(0,1,m).
+	
+activityOnStartT(component,t):- \
+	component_Activity(component), \
+	componentTCM(component,t,_,m), lifeCycleCallback(0,2,m).
+	
+activityOnResumeT(component,t):- \
+	component_Activity(component), \
+	componentTCM(component,t,_,m), lifeCycleCallback(0,3,m).
+	
+activityOnPauseT(component,t):- \
+	component_Activity(component), \
+	componentTCM(component,t,_,m), lifeCycleCallback(0,4,m).
+	
+activityOnStopT(component,t):- \
+	component_Activity(component), \
+	componentTCM(component,t,_,m), lifeCycleCallback(0,5,m).
+
+activityOnDestroyT(component,t):- \
+	component_Activity(component), \
+	componentTCM(component,t,_,m), lifeCycleCallback(0,6,m).
+	
+###
+
+activityBetweenOnStopOnDestroyT(component,t) :- \
+	component_Activity(component), \
+	componentTCM(component,t,_,m), lifeCycleCallback(0,7,m).
+	
+###
+
+activityNonLifecycleT(component,t) :- \
+	component_Activity(component), \
+	componentTCM(component,t,_,_), \
+	!activityOnCreateT(component,t), \
+	!activityOnReStartT(component,t), \
+	!activityOnStartT(component,t), \
+	!activityOnResumeT(component,t), \
+	!activityOnPauseT(component,t), \
+	!activityOnStopT(component,t), \
+	!activityOnDestroyT(component,t), \
+	!activityBetweenOnStopOnDestroyT(component,t).
+
+###
+	
+serviceOnCreateT(component,t):- \
+	component_Service(component), \
+	componentTCM(component,t,_,m), lifeCycleCallback(1,0,m).
+	
+serviceOnDestroyT(component,t):- \
+	component_Service(component), \
+	componentTCM(component,t,_,m), lifeCycleCallback(1,1,m).
+	
+###

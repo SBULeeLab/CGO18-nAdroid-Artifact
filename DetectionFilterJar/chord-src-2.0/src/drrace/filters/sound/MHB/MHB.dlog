@@ -1,0 +1,36 @@
+# name=MHB-dlog
+
+.include "A.dom"
+
+.bddvarorder A0xA1
+
+###
+# Relations
+###
+
+MHB_activity(t1:A0,t2:A1) input
+MHB_service(t1:A0,t2:A1) input
+
+MHB_asyncTask(t0:A0,t1:A1) input
+MHB_serviceConnection(t0:A0,t1:A1) input
+
+MHB(t1:A0,t2:A1) output
+
+###
+# Constraints
+###
+
+# MHB consider must-happen-before orders:
+# (1) Activity: onCreate, onDestroy, callback between onStop and onDestroy
+# (2) Service: onCreate, onDestroy
+# (3) AsyncTask
+# (4) ServiceConnection
+
+MHB(t1,t2) :- MHB_activity(t1,t2).
+MHB(t1,t2) :- MHB_service(t1,t2).
+
+MHB(t1,t2) :- MHB_asyncTask(t1,t2).
+
+MHB(t1,t2) :- MHB_serviceConnection(t1,t2).
+
+###

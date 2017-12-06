@@ -1,0 +1,66 @@
+\documentclass[openany]{book}
+\usepackage{hyperlatex}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{float}
+
+\texonly{
+% put borders around figures
+	\floatstyle{boxed} 
+	\restylefloat{figure}
+% set dimensions of page/text
+	\parindent=0in
+	\parskip=10pt
+	\oddsidemargin=-0.3in
+	\evensidemargin=-0.3in
+	\textwidth=7in
+	\textheight=8.0in
+% redefine certain commands
+	\renewcommand\code[1]{\path{#1}}
+	\renewcommand\xlink[2]{\href{#2}{#1}}
+}
+
+\htmlonly{
+	\newcommand\code[1]{{\tt #1}}
+	\newcommand\url[1]{\xlink{#1}{#1}}
+}
+
+\newcommand\bh{{\bf h}}
+\newcommand\bi{{\bf i}}
+\newcommand\bo{{\bf o}}
+\newcommand\bt{{\bf t}}
+\newcommand\bm{{\bf m}}
+\newcommand\be{{\bf e}}
+\newcommand\bg{{\bf f}}
+\newcommand\bb{{\bf b}}
+\newcommand\bl{{\bf l}}
+\newcommand\bp{{\bf p}}
+\newcommand\br{{\bf r}}
+\newcommand\bw{{\bf w}}
+
+\setcounter{htmldepth}{2}
+\setcounter{htmlautomenu}{3}
+
+\htmltitle{Chord}
+\htmladdress{mhn@cs.stanford.edu}
+
+\title{Chord: A Versatile Platform for Program Analysis}
+\author{Mayur Naik}
+\date{\today}
+\begin{document}
+\maketitle
+
+\input{whatis_chord}
+\input{getting_started}
+\input{example}
+\input{architecture}
+\input{properties}
+\input{predefined_analyses}
+\input{analyses}
+\input{dynamic_analysis}
+\input{datalog_analysis}
+\input{computing_scope}
+\input{program_representation}
+\input{acknowledgments}
+
+\end{document}

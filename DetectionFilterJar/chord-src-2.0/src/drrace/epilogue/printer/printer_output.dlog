@@ -1,0 +1,50 @@
+# name=drrace-printer-output-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "E.dom"
+.include "F.dom"
+.include "M.dom"
+
+.bddvarorder E0xE1_C0xC1_F0_M0xM1xM2xM3_A0xA1
+
+###
+# Relations
+###
+
+printerInput(t0:A0,c0:C0,e0:E0,t1:A1,c1:C1,e1:E1) input
+
+ME(m0:M0,e0:E0) input
+EF(e0:E0,f0:F0) input
+
+entryCallbackReachT(m0:M0,t0:A0) input
+entryCallbackInOneComponentPair(m1:M0,m2:M1) input
+
+###
+# Constraints
+###
+
+# output_F_MM_MM(f,m0,m1,m2,m3)
+# f: field
+# m0 -> m1: entry method -> method containing Use statement
+# m2 -> m3: entry method -> method containing Free statement
+# m0 and m2 should be entry methods of the same component (m0 != m2)
+# or m0 = m2
+
+output_F_MM_MM(f:F0,m0:M0,m1:M1,m2:M2,m3:M3) output
+
+output_F_MM_MM(f,m0,m1,m2,m3) :- \
+	printerInput(t1,_,e1,t3,_,e3), \
+	ME(m1,e1), entryCallbackReachT(m0,t1), \
+	ME(m3,e3), entryCallbackReachT(m2,t3), \
+	EF(e1,f),EF(e3,f), \
+	entryCallbackInOneComponentPair(m0,m2).
+	
+output_F_MM_MM(f,m0,m1,m2,m3) :- \
+	printerInput(t1,_,e1,t3,_,e3), \
+	ME(m1,e1), entryCallbackReachT(m0,t1), \
+	ME(m3,e3), entryCallbackReachT(m2,t3), \
+	EF(e1,f),EF(e3,f), \
+	m0=m2.
+
+###

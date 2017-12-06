@@ -1,0 +1,59 @@
+# name=drrace-detector-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "E.dom"
+.include "F.dom"
+
+.bddvarorder E0_E1_C0xC1_F0_A0_A1 
+
+###
+# Relations
+###
+
+useTCE(t0:A0,c0:C0,e0:E0) input
+freeTCE(t0:A0,c0:C0,e0:E0) input
+
+EF(e0:E0,f0:F0) input
+statF(f:F0) input
+CEC(c:C0,e:E0,o:C1) input
+
+TInOneComponentPair(t1:A0,t2:A1) input
+
+###
+# Constraints
+###
+
+# uaf_starting
+# use and free should access the same field
+# threads for use and free should be different
+
+uaf_starting(t1,c1,e1,t2,c2,e2) :- \
+	useTCE(t1,c1,e1),  EF(e1,f), \
+	freeTCE(t2,c2,e2), EF(e2,f), \
+	t1!=t2. 
+
+###
+
+# Use and free should point to shared object
+# Apply escaping analysis (determining whether the value can be shared).
+
+statE(e) :- EF(e,f), statF(f).
+
+uaf_escape(t1,c1,e1,t2,c2,e2) :- \
+	uaf_starting(t1,c1,e1,t2,c2,e2), \
+	CEC(c1,e1,o), CEC(c2,e2,o).
+uaf_escape(t1,c1,e1,t2,c2,e2) :- \
+	uaf_starting(t1,c1,e1,t2,c2,e2), \
+	statE(e1), statE(e2).
+
+###
+
+# Threads of use and free should be in the same android component
+
+uaf_TInOneComponent(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_TInOneComponent(t1,c1,e1,t2,c2,e2) :- \
+	uaf_escape(t1,c1,e1,t2,c2,e2), \
+	TInOneComponentPair(t1,t2).
+
+###

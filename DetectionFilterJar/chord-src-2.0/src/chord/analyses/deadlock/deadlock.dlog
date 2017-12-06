@@ -1,0 +1,49 @@
+# Copyright (c) 2008-2010, Intel Corporation.
+# Copyright (c) 2006-2007, The Trustees of Stanford University.
+# All rights reserved.
+# Licensed under the terms of the New BSD License.
+
+# Author: Mayur Naik (mhn@cs.stanford.edu)
+# name=deadlock-dlog
+
+.include "C.dom"
+.include "A.dom"
+.include "N.dom"
+.include "M.dom"
+
+.bddvarorder A0xA1_M0_C0xC1_N0_N3_N1_N2
+
+###
+# Relations
+###
+
+escNO(n:N0,o:C0) input
+mhpTNTN(t1:A0,n1:N0,t2:A1,n2:N1) input
+syncTNN(t:A0,n1:N0,n2:N1) input
+guarded(t1:A0,t2:A1,n1:N0,n3:N1) input
+escNN(n1:N0,n2:N3)
+
+deadlock1(n1:N0,n2:N1,n3:N2,n4:N3) 
+deadlock2(t1:A0,n1:N0,n2:N1,t2:A1,n3:N2,n4:N3)
+deadlock3(t1:A0,n1:N0,n2:N1,t2:A1,n3:N2,n4:N3)
+deadlock4(t1:A0,n1:N0,n2:N1,t2:A1,n3:N2,n4:N3)
+deadlock (t1:A0,n1:N0,n2:N1,t2:A1,n3:N2,n4:N3) output
+
+###
+# Constraints
+###
+
+escNN(n1,n2) :- escNO(n1,o), escNO(n2,o).
+
+deadlock1(n1,n2,n3,n4) :- escNN(n1,n4), escNN(n2,n3).
+
+deadlock2(t1,n1,n2,t2,n3,n4) :- deadlock1(n1,n2,n3,n4), syncTNN(t1,n1,n2), syncTNN(t2,n3,n4).
+
+deadlock3(t1,n1,n2,t2,n3,n4) :- deadlock2(t1,n1,n2,t2,n3,n4), mhpTNTN(t2,n4,t1,n2).
+
+deadlock4(t1,n1,n2,t2,n3,n4) :- deadlock3(t1,n1,n2,t2,n3,n4), !guarded(t1,t2,n1,n3).
+
+deadlock(t1,n1,n2,t2,n3,n4) :- deadlock4(t1,n1,n2,t2,n3,n4), t1<t2.
+deadlock(t1,n1,n2,t2,n3,n4) :- deadlock4(t1,n1,n2,t2,n3,n4), t1=t2, n1<n3.
+deadlock(t1,n1,n2,t2,n3,n4) :- deadlock4(t1,n1,n2,t2,n3,n4), t1=t2, n1=n3, n2<=n4.
+

@@ -1,0 +1,34 @@
+# name=useTCE-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "E.dom"
+.include "M.dom"
+
+.bddvarorder E0_I0_C0xC1_A0_M0xM1
+
+###
+# Relations
+###
+
+relevantTCM(t0:A0,c0:C0,m0:M0) input
+ME(m0:M0,e0:E0) input
+writeE(e:E0) input
+initM(m:M0) input
+
+###
+# Constraints
+###
+
+# useTCE(t,c,e)
+# t: thread
+# c: context
+# e: use statement
+# m: method containing the use statement (excluding the initM)
+
+useTCE(t0:A0,c0:C0,e0:E0) output
+useTCE(t,c,e) :- \
+	relevantTCM(t,c,m), !initM(m), \
+	ME(m,e), !writeE(e).
+
+###

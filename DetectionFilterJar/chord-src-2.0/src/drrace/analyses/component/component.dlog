@@ -1,0 +1,34 @@
+# name=component-dlog
+
+.include "T.dom"
+.include "K.dom"
+
+.bddvarorder T0_K0
+
+###
+# Relations
+###
+
+component(k0:K0,component:T0) input
+
+component_Activity(component:T0) output
+component_Service(component:T0) output
+component_ContentProvider(component:T0) output
+component_BroadcastReceiver(component:T0) output
+component_Application(component:T0) output
+
+###
+# Constraints
+###
+
+component_Activity(component) :- component(0,component).
+
+component_Service(component) :- component(1,component).
+
+component_ContentProvider(component) :- component(2,component).
+
+component_BroadcastReceiver(component) :- component(3,component).
+
+component_Application(component) :- component(4,component).
+
+###

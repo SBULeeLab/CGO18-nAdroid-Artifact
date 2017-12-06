@@ -1,0 +1,33 @@
+# name=MHB_ServiceConnection-dlog
+
+.include "C.dom"
+.include "M.dom"
+.include "A.dom"
+
+.bddvarorder C0xC1_M0xM1_A0xA1
+
+###
+# Relations
+###
+
+onServiceConnectedRunM(m:M0) input
+onServiceDisconnectedRunM(m:M0) input
+
+relevantTCM(t:A0,c:C0,m:M0) input
+CMCM(c0:C0,m0:M0,c1:C1,m1:M1) input
+
+MHB_serviceConnection(t0:A0,t1:A1) output
+
+###
+# Constraints
+###
+
+# onServiceConnected -> onServiceDisconnected
+MHB_serviceConnection(t0,t2) :- \
+	onServiceConnectedRunM(m0), \
+	relevantTCM(t0,c0,m0), CMCM(c0,m0,c1,_), \
+	onServiceDisconnectedRunM(m2), \
+	relevantTCM(t2,c2,m2), CMCM(c2,m2,c3,_), \
+	c1=c3.
+
+###

@@ -1,0 +1,32 @@
+# name=FHB-dlog
+
+.include "E.dom"
+.include "I.dom"
+.include "M.dom"
+.include "A.dom"
+.include "C.dom"
+
+.bddvarorder E0_I0_C0_A0_M0
+
+###
+# Relations
+###
+
+freeTCE(t:A0,c:C0,e:E0) input
+
+activityFinishI(i0:I0) input
+
+relevantTCM(t0:A0,c0:C0,m0:M0) input
+MI(m0:M0,i0:I0) input
+
+FreeWithFinish(t:A0,c:C0,e:E0) output
+
+###
+# Constraints
+###
+
+FreeWithFinish(t,c,e) :- \
+	freeTCE(t,c,e), \
+	relevantTCM(t,_,m0), MI(m0,i0), activityFinishI(i0).
+	
+###

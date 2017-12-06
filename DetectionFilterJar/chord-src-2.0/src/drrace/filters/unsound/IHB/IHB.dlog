@@ -1,0 +1,134 @@
+# name=IHB-dlog
+
+.include "K.dom"
+.include "I.dom"
+.include "V.dom"
+.include "M.dom"
+.include "A.dom"
+.include "T.dom"
+.include "C.dom"
+
+
+.bddvarorder C0xC1_A0xA1_I0_V0_M0_T0_K0
+
+###
+# Relations
+###
+
+removeCallbackIV(k0:K0,i0:I0,v0:V0) input 
+
+onServiceConnectedM(m:M0) input
+onServiceDisconnectedM(m:M0) input
+onReceiveM(m:M0) input
+handleMessageM(m:M0) input
+
+servicConnectedThread(t:A0) input
+serviceDisconnectedThread(t:A0) input
+broadcastReceiverThread(t:A0) input
+handleMessageThread(t:A0) input
+
+activityOnPauseT(component:T0,t0:A0) input
+activityOnStopT(component:T0,t0:A0) input
+activityOnDestroyT(component:T0,t0:A0) input
+activityBetweenOnStopOnDestroyT(component:T0,t0:A0) input
+
+serviceOnDestroyT(component:T0,t0:A0) input
+
+relevantTCM(t:A0,c:C0,m:M0) input
+CVC(c1:C0,v:V0,c2:C1) input
+
+MI(m0:M0,i0:I0) input
+
+IHB(t0:A0,t1:A1) output
+
+###
+# Constraints
+###
+
+# The remove-callback statement can only exist in:
+# activityOnPauseT, activityOnStopT, activityBetweenOnStopOnDestroyT and activityOnDestroyT
+# serviceOnDestroyT
+
+removeCallbackThread(t) :- \
+	activityOnPauseT(_,t).
+removeCallbackThread(t) :- \
+	activityOnStopT(_,t).
+removeCallbackThread(t) :- \
+	activityOnDestroyT(_,t).
+removeCallbackThread(t) :- \
+	activityBetweenOnStopOnDestroyT(_,t).
+
+removeCallbackThread(t) :- \
+	serviceOnDestroyT(_,t).	
+
+###
+
+# IHB for onServiceConnected
+IHB_ServiceConnection(t1,t2) :- \
+	removeCallbackIV(0,i2,v2), \
+	relevantTCM(t2,c2,m2), MI(m2,i2), removeCallbackThread(t2), \
+	CVC(c2,v2,c1), \
+	relevantTCM(t1,c1,m1), onServiceConnectedM(m1), servicConnectedThread(t1).
+
+# IHB for onServiceDisconnected
+IHB_ServiceConnection(t1,t2) :- \
+	removeCallbackIV(0,i2,v2), \
+	relevantTCM(t2,c2,m2), MI(m2,i2), removeCallbackThread(t2), \
+	CVC(c2,v2,c1), \
+	relevantTCM(t1,c1,m1), onServiceDisconnectedM(m1), serviceDisconnectedThread(t1).
+
+###
+
+# IHB for onReceive
+IHB_BroadcastReceiver(t1,t2) :- \
+	removeCallbackIV(1,i2,v2), \
+	relevantTCM(t2,c2,m2), MI(m2,i2), removeCallbackThread(t2), \
+	CVC(c2,v2,c1), \
+	relevantTCM(t1,c1,m1), onReceiveM(m1), broadcastReceiverThread(t1).
+
+###
+
+# IHB for handleMessage
+IHB_Handler(t1,t2) :- \
+	removeCallbackIV(2,i2,v2), \
+	relevantTCM(t2,c2,m2), MI(m2,i2), removeCallbackThread(t2), \
+	CVC(c2,v2,c1), \
+	relevantTCM(t1,c1,m1), handleMessageM(m1), handleMessageThread(t1).
+
+###
+
+# IHB(t1,t2)
+# t1 can be thread of: 
+# onServiceConnected, onServiceDisconnected, onReceive and handleMessage
+# t2 can be thread of:
+# (t2 is the thread removing callback or the thread happening after the thread removing callback) 
+# activity: onPause, onStop, BetweenOnStopOnDestroy, onDestroy
+# service:  onDestroy
+
+# Initialize the IHB
+IHB(t1,t2) :- IHB_ServiceConnection(t1,t2).
+IHB(t1,t2) :- IHB_BroadcastReceiver(t1,t2).
+IHB(t1,t2) :- IHB_Handler(t1,t2).
+
+# Traverse the IHB to apply activity life cycle happen before order
+IHB(t1,t3) :- \
+	IHB(t1,t2), \
+	activityOnPauseT(component,t2), activityOnStopT(component,t3).
+IHB(t1,t3) :- \
+	IHB(t1,t2), \
+	activityOnPauseT(component,t2), activityBetweenOnStopOnDestroyT(component,t3).
+IHB(t1,t3) :- \
+	IHB(t1,t2), \
+	activityOnPauseT(component,t2), activityOnDestroyT(component,t3).
+	
+IHB(t1,t3) :- \
+	IHB(t1,t2), \
+	activityOnStopT(component,t2), activityBetweenOnStopOnDestroyT(component,t3).
+IHB(t1,t3) :- \
+	IHB(t1,t2), \
+	activityOnStopT(component,t2), activityOnDestroyT(component,t3).
+	
+IHB(t1,t3) :- \
+	IHB(t1,t2), \
+	activityBetweenOnStopOnDestroyT(component,t2), activityOnDestroyT(component,t3).
+###

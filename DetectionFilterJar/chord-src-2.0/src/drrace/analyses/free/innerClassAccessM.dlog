@@ -1,0 +1,54 @@
+# name=innerClassAccessM-dlog
+
+.include "M.dom"
+.include "E.dom"
+.include "I.dom"
+
+.bddvarorder E0_I0_M0
+
+###
+# Relations
+###
+innerClassAccessM(m0:M0) input
+
+ME(m0:M0,e0:E0) input
+writeE(e0:E0) input
+
+MI(m0:M0,i0:I0) input
+statIM(i0:I0,m0:M0) input
+
+innerClassAccessPutM(m0:M0) output
+innerClassAccessGetM(m0:M0) output
+
+innerClassAccessPutMInv(i0:I0,m0:M0) output
+
+###
+# Constraints
+###
+
+innerClassAccessPutMCandidate(m) :- \
+	innerClassAccessM(m), \
+	ME(m,e), writeE(e), !MI(m,_).
+	
+innerClassAccessGetMCandidate(m) :- \
+	innerClassAccessM(m), \
+	ME(m,e), !writeE(e), !MI(m,_).
+
+###
+# A set of access$.. methods for PutField.
+innerClassAccessPutM(m) :- \
+	innerClassAccessPutMCandidate(m), \
+	!innerClassAccessGetMCandidate(m).
+
+# A set of access$.. methods for GetField.
+innerClassAccessGetM(m) :- \
+	innerClassAccessGetMCandidate(m), \
+	!innerClassAccessPutMCandidate(m).	
+###
+
+# relation between the invoke statements and the access$.. methods for PutField.
+innerClassAccessPutMInv(i,m) :- \
+	innerClassAccessPutM(m), \
+	statIM(i,m).
+
+###

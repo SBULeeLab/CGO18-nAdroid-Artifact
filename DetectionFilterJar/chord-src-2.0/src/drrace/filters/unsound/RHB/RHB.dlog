@@ -1,0 +1,81 @@
+# name=RHB-dlog
+
+.include "T.dom"
+.include "A.dom"
+.include "C.dom"
+.include "E.dom"
+.include "K.dom"
+.include "F.dom"
+
+.bddvarorder E0xE1_F0_C0xC1_A0xA1_T0_K0
+
+###
+# Relations
+###
+
+activityOnReStartT(component:T0,t0:A0) input
+activityOnStartT(component:T0,t0:A0) input
+activityOnResumeT(component:T0,t0:A0) input
+activityOnPauseT(component:T0,t0:A0) input
+activityOnStopT(component:T0,t0:A0) input
+
+activityNonLifecycleT(component:T0,t0:A0) input
+
+freeTCE(t0:A0,c0:C0,e0:E0) input
+allocE(k0:K0,e0:E0,e1:E1) input
+
+relevantTCE(t:A0,c:C0,e:E0) input
+CEC(c0:C0,e0:E0,c1:C1) input
+statF(f:F0) input
+EF(e:E0,f:F0) input
+
+###
+# Constraints
+###
+# ResumePath: onPause -> onResume
+ResumePath(t0,t1) :- \
+	activityOnPauseT(component,t0),\
+	activityOnResumeT(component,t1).
+
+# ResumePath: onStop -> onRestart -> onStart -> onResume	
+ResumePath(t0,t1) :- \
+	activityOnStopT(component,t0),\
+	activityOnReStartT(component,t1).
+ResumePath(t0,t1) :- \
+	activityOnStopT(component,t0),\
+	activityOnStartT(component,t1).
+ResumePath(t0,t1) :- \
+	activityOnStopT(component,t0),\
+	activityOnResumeT(component,t1).
+
+###
+
+activityOnPauseOnStopT(component,t) :- activityOnPauseT(component,t).
+activityOnPauseOnStopT(component,t) :- activityOnStopT(component,t).
+
+###
+
+# ResumeReAllocated(t1,t2,c2,e2)
+# t1: threads for use (activity NonLifecycle Threads)
+# t2,c2,e2:
+# free in nnPause or onStop thread
+# and the object will be re-allocated in the Resume Path
+#
+# t3,c3,e3:
+# re-allocation (putStatic or putField) in the Resume Path of free
+
+ResumeReAllocated(t1:A0,t2:A1,c2:C0,e2:E0) output
+
+ResumeReAllocated(t1,t2,c2,e2) :- \
+	activityOnPauseOnStopT(component,t2), freeTCE(t2,c2,e2), \
+	ResumePath(t2,t3), relevantTCE(t3,c3,e3), allocE(2,e3,_), \
+	CEC(c2,e2,o), CEC(c3,e3,o), EF(e2,f), EF(e3,f), \
+	activityNonLifecycleT(component,t1).
+	
+ResumeReAllocated(t1,t2,c2,e2) :- \
+	activityOnPauseOnStopT(component,t2), freeTCE(t2,c2,e2), \
+	ResumePath(t2,t3), relevantTCE(t3,_,e3), allocE(2,e3,_), \
+	statF(f), EF(e2,f), EF(e3,f), \
+	activityNonLifecycleT(component,t1).
+
+###

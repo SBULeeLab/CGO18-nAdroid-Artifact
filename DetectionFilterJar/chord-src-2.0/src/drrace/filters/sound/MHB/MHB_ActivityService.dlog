@@ -1,0 +1,117 @@
+# name=MHB_ActivityService-dlog
+
+.include "A.dom"
+.include "T.dom"
+.include "C.dom"
+.include "M.dom"
+
+.bddvarorder A0xA1_T0_C0_M0
+
+###
+# Relations
+###
+
+activityOnCreateT(component:T0,t0:A0) input
+activityOnDestroyT(component:T0,t0:A0) input
+activityBetweenOnStopOnDestroyT(component:T0,t0:A0) input
+
+serviceOnCreateT(component:T0,t0:A0) input
+serviceOnDestroyT(component:T0,t0:A0) input
+
+componentTCM(component:T0,t0:A0,c0:C0,m0:M0) input
+threadReachable(t0:A0,t1:A1) input
+
+runOnLooperThread(t:A0) input
+
+MHB_activity(t1:A0,t2:A1) output
+MHB_service(t1:A0,t2:A1) output
+
+###
+# Constraints
+###
+
+MHB_activity(t1,t2) :- MHB_activity_onCreate(t1,t2).
+MHB_activity(t1,t2) :- MHB_activity_onDestroy(t1,t2).
+MHB_activity(t1,t2) :- MHB_activity_BetweenOnStopOnDestroy(t1,t2).
+
+###
+
+MHB_service(t1,t2) :- MHB_service_onCreate(t1,t2).
+MHB_service(t1,t2) :- MHB_service_onDestroy(t1,t2).
+
+###################################################################################
+
+# MHB_activity_onCreate(t1,t2)
+# t1 is thread of activity onCreate
+# t2 can be
+# (1) entry points threads in same component (exclude t1 itself)
+# (2) threads reached by (1)
+# (3) threads (run on looper thread) reached by t1
+
+MHB_activity_onCreate(t1,t2) :- \
+	activityOnCreateT(component,t1), \
+	componentTCM(component,t2,_,_), t2!=t1.
+	
+MHB_activity_onCreate(t1,t2) :- \
+	activityOnCreateT(component,t1), \
+	componentTCM(component,t3,_,_), t3!=t1, \
+	threadReachable(t3,t2).
+
+MHB_activity_onCreate(t1,t2) :- \
+	activityOnCreateT(_,t1), \
+	threadReachable(t1,t2), runOnLooperThread(t2).
+
+###################################################################################
+
+# MHB_activity_onDestroy(t1,t2)
+# t2 is thread of activity onDestroy
+# t1 is entry points threads in same component (exclude t2 itself)
+
+MHB_activity_onDestroy(t1,t2) :- \
+	activityOnDestroyT(component,t2), \
+	componentTCM(component,t1,_,_), t1!=t2.
+
+###################################################################################
+
+# MHB_activity_BetweenOnStopOnDestroy(t1,t2)
+# t2 is thread of activity callback between onStop and onDestroy
+# t1 is entry points threads in same component (exclude t2 itself and onDestroy thread)
+
+MHB_activity_BetweenOnStopOnDestroy(t1,t2) :- \
+	activityBetweenOnStopOnDestroyT(component,t2), \
+	componentTCM(component,t1,_,_), \
+	t1!=t2, !activityOnDestroyT(component,t1).
+
+###################################################################################
+
+# MHB_service_onCreate(t1,t2)
+# t1 is thread of service onCreate
+# t2 can be
+# (1) entry points threads in same component (exclude t1 itself)
+# (2) threads reached by (1)
+# (3) threads (run on looper thread) reached by t1
+
+MHB_service_onCreate(t1,t2) :- \
+	serviceOnCreateT(component,t1), \
+	componentTCM(component,t2,_,_), t2!=t1.
+	
+MHB_service_onCreate(t1,t2) :- \
+	serviceOnCreateT(component,t1), \
+	componentTCM(component,t3,_,_), t3!=t1, \
+	threadReachable(t3,t2).
+
+MHB_service_onCreate(t1,t2) :- \
+	serviceOnCreateT(_,t1), \
+	threadReachable(t1,t2), runOnLooperThread(t2).
+	
+###################################################################################
+
+# MHB_service_onDestroy(t1,t2)
+# t2 is thread of service onDestroy
+# t1 is entry points threads in same component (exclude t2 itself)
+
+MHB_service_onDestroy(t1,t2) :- \
+	serviceOnDestroyT(component,t2), \
+	componentTCM(component,t1,_,_), t1!=t2.
+
+###################################################################################

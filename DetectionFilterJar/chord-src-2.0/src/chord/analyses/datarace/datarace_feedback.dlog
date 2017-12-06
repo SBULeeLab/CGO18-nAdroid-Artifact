@@ -1,0 +1,47 @@
+# Copyright (c) 2008-2009, Intel Corporation.
+# Copyright (c) 2006-2007, The Trustees of Stanford University.
+# All rights reserved.
+# Licensed under the terms of the New BSD License.
+
+# Author: Mayur Naik (mhn@cs.stanford.edu)
+# name=datarace-feedback-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "E.dom"
+.include "V.dom"
+.include "P.dom"
+.include "I.dom"
+.include "M.dom"
+.include "F.dom"
+
+.bddvarorder F0_E0_E1_A0xA1_I0xM0_P0_V0xV1_C0xC1xC2
+
+###
+# Relations
+###
+
+datarace(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+EV(e:E0,v:V0) input
+PE(p:P0,e:E0) input
+CEC(c:C0,e:E0,o:C1) input
+mhp(c:C,p:P,t1:A,t2:A) input
+
+toBeRefinedCICM(c:C0,i:I0,d:C1,m:M0) output
+toBeRefinedCVC(c:C0,v:V0,d:C1) output
+toBeRefinedFC(f:F0,c:C0) output
+toBeRefinedCFC(c:C0,f:F0,d:C1) output
+toBeRefinedMHP(c:C0,p:P0,t1:A,t2:A) output
+
+###
+# Constraints
+###
+
+toBeRefinedCVC(c1,v1,o) :- datarace(_,c1,e1,_,c2,e2), EV(e1,v1), CEC(c1,e1,o), CEC(c2,e2,o).
+toBeRefinedCVC(c2,v2,o) :- datarace(_,c1,e1,_,c2,e2), EV(e2,v2), CEC(c1,e1,o), CEC(c2,e2,o).
+toBeRefinedMHP(c1,p1,t1,t2) :- datarace(t1,c1,e1,t2,_,_), mhp(c1,p1,t1,t2), PE(p1,e1). 
+toBeRefinedMHP(c2,p2,t2,t1) :- datarace(t1,_,_,t2,c2,e2), mhp(c2,p2,t1,t2), PE(p2,e2). 
+
+toBeRefinedCICM(c,_,_,_) :- c<0.
+toBeRefinedFC(f,_) :- f<0.
+toBeRefinedCFC(c,_,_) :- c<0.

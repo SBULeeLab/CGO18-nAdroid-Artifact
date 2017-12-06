@@ -1,0 +1,54 @@
+# Copyright (c) 2008-2010, Intel Corporation.
+# Copyright (c) 2006-2007, The Trustees of Stanford University.
+# All rights reserved.
+# Licensed under the terms of the New BSD License.
+
+# Author: Mayur Naik (mhn@cs.stanford.edu)
+# name=datarace-prologue-dlog
+
+.include "M.dom"
+.include "C.dom"
+.include "E.dom"
+.include "A.dom"
+.include "F.dom"
+.include "I.dom"
+.include "T.dom"
+
+.bddvarorder F0_E0_A0_I0xM0xM1_T0_C0xC1xC2
+
+###
+# Relations
+###
+
+writeE(e:E0) input
+ME(m:M0,e:E0) input
+EF(e:E0,f:F0) input
+thrSenAbbrCICM(c:C0,i:I0,d:C1,m:M0) input
+threadAOCM(t:A0,o:C0,c:C1,m:M0) input
+MI(m:M0,i:I0) input
+checkExcludedT(t:T0) input
+TM(t:T0,m:M0) input
+relevantM(m:M0)
+
+reachableTCM(t:A0,c:C0,m:M0) output
+
+relevantTCM(t:A0,c:C0,m:M0)
+relevantTCE(t:A0,c:C0,e:E0) output
+
+rdOrWrTCEF(t:A0,c:C0,e:E0,f:F0) output
+onlyWrTCEF(t:A0,c:C0,e:E0,f:F0) output
+
+###
+# Constraints
+###
+
+reachableTCM(t,c,m) :- threadAOCM(t,_,c,m).
+reachableTCM(t,d,n) :- reachableTCM(t,c,m), MI(m,i), thrSenAbbrCICM(c,i,d,n).
+
+relevantM(m) :- TM(t,m), !checkExcludedT(t).
+relevantTCM(t,c,m) :- reachableTCM(t,c,m), relevantM(m).
+
+relevantTCE(t,c,e) :- relevantTCM(t,c,m), ME(m,e).
+
+rdOrWrTCEF(t,c,e,f) :- relevantTCE(t,c,e), EF(e,f).
+onlyWrTCEF(t,c,e,f) :- relevantTCE(t,c,e), EF(e,f), writeE(e).

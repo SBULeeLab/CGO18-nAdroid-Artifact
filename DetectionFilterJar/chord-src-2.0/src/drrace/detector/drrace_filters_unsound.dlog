@@ -1,0 +1,174 @@
+# name=drrace-filters-unsound-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "E.dom"
+.include "K.dom"
+
+.bddvarorder E0_E1_C0xC1_A0_A1_K0
+
+###
+# Relations
+###
+
+uaf_TInOneComponent(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+
+bothRunOnLooperThread(t1:A0,t2:A1) input
+
+###
+# Constraints
+###
+
+###################################################################################
+# Filter: use for return
+
+EForRtn(e0:E0) input
+
+###
+
+uaf_UsedForRtn(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_UsedForRtn(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	EForRtn(e1).
+
+###
+
+uaf_UsedForRtn_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_UsedForRtn_Excluded(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	!uaf_UsedForRtn(t1,c1,e1,t2,c2,e2).
+
+###################################################################################
+
+# Filter: use for parameter
+
+EForParam(e0:E0) input
+
+###
+
+uaf_UsedForParam(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_UsedForParam(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	EForParam(e1).
+
+###
+
+uaf_UsedForParam_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_UsedForParam_Excluded(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	!uaf_UsedForParam(t1,c1,e1,t2,c2,e2).
+
+###################################################################################
+
+# Filter: intra-Maybe-Allocation
+
+allocE(k0:K0,e0:E0,e1:E1) input
+
+###
+
+# t1 and t2 should both run on the looper thread
+
+uaf_maybeAllocE(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_maybeAllocE(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	allocE(1,_,e1), \
+	bothRunOnLooperThread(t1,t2).
+
+###
+
+uaf_maybeAllocE_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_maybeAllocE_Excluded(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	!uaf_maybeAllocE(t1,c1,e1,t2,c2,e2).
+	
+###################################################################################
+
+# Filter: Post Happen Before Order (PHB)
+
+PHB(t0:A0,t1:A1) input
+
+###
+
+uaf_PHB(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_PHB(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	PHB(t1,t2).
+
+###
+
+uaf_PHB_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_PHB_Excluded(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	!uaf_PHB(t1,c1,e1,t2,c2,e2).
+
+###################################################################################
+
+# Filter: Resume Happen Before Order (RHB)
+
+ResumeReAllocated(t1:A0,t2:A1,c2:C0,e2:E0) input
+
+###
+
+uaf_RHB(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_RHB(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	ResumeReAllocated(t1,t2,c2,e2).
+
+###
+
+uaf_RHB_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_RHB_Excluded(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	!uaf_RHB(t1,c1,e1,t2,c2,e2).
+
+###################################################################################
+
+# Filter: Finish Happen Before Order (FHB)
+
+FreeWithFinish(t:A0,c:C0,e:E0) input
+
+# Once t1 and t2 both run on looper thread, and t2 has a finish() call
+# we filter it.
+# 
+# To be done in the future (maybe):
+# I think we should consider whether t1 is posted or entry point, 
+# we should also consider the life cycle happen before.
+# Now just be consistent with the former version.
+
+###
+
+uaf_FHB(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_FHB(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	bothRunOnLooperThread(t1,t2), \
+	FreeWithFinish(t2,c2,e2).
+
+###
+
+uaf_FHB_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_FHB_Excluded(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	!uaf_FHB(t1,c1,e1,t2,c2,e2).
+
+###################################################################################
+
+# Filter: Imperative Happen Before Order (IHB)
+# Remove Callback: unbindService, unregisterReceiver, removeCallbacksAndMessages
+
+IHB(t1:A0,t2:A1) input
+
+###
+
+uaf_IHB(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_IHB(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	IHB(t1,t2).
+
+###
+
+uaf_IHB_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_IHB_Excluded(t1,c1,e1,t2,c2,e2) :- \
+	uaf_TInOneComponent(t1,c1,e1,t2,c2,e2), \
+	!uaf_IHB(t1,c1,e1,t2,c2,e2).
+
+###################################################################################

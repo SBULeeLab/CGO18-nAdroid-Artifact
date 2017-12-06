@@ -1,0 +1,26 @@
+# Copyright (c) 2008-2010, Intel Corporation.
+# Copyright (c) 2006-2007, The Trustees of Stanford University.
+# All rights reserved.
+# Licensed under the terms of the New BSD License.
+
+# Author: Mayur Naik (mhn@cs.stanford.edu)
+# name=datarace-nongrded-exclude-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "E.dom"
+
+.bddvarorder E0_A0_C0xC1
+
+###
+# Relations
+###
+
+guardedE(t:A0,c1:C0,e:E0,c2:C1) output
+
+###
+# Constraints
+###
+
+guardedE(t,_,_,_) :- t<0.
+

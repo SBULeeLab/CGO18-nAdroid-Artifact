@@ -1,0 +1,153 @@
+# Copyright (c) 2008-2009, Intel Corporation.
+# Copyright (c) 2006-2007, The Trustees of Stanford University.
+# All rights reserved.
+# Licensed under the terms of the New BSD License.
+
+# refinement of k-object-sensitive may alias analysis with call-graph construction
+
+# Author: Mayur Naik (mhn@cs.stanford.edu)
+# name=refine-hybrid-dlog
+
+.include "F.dom"
+.include "H.dom"
+.include "I.dom"
+.include "M.dom"
+.include "T.dom"
+.include "V.dom"
+.include "Z.dom"
+.include "C.dom"
+
+.bddvarorder F0_I0xM0xM1_T0_V0xV1_H0_C0xC1xC2
+
+#####################################################################
+# relations
+#####################################################################
+
+refinableCH(c:C,h:H) input
+refinableCI(c:C,i:I) input
+refinableM(m:M) input
+kcfaSenM(m:M) input
+epsilonV(v:V) input
+refinableV(v:V) input
+clinitTM(t:T,m:M) input
+clinitM(m:M)
+nonRootM(m:M)
+
+MI(m:M,i:I) input
+CHC(c1:C,h:H,c2:C) input
+reachableCM(c:C,m:M) input
+IinvkArg0(i:I0,v:V1) input
+
+ctxtInsICM(i:I,c:C,m:M) input
+kobjSenICM(i:I,c:C,m:M) input
+
+ctxtInsSpecIM(i:I,m:M) input
+kobjSenSpecIM(i:I,m:M) input
+
+RobjValAsgnInst(c:C,l:V,h:H) input
+RobjVarAsgnInst(c:C,l:V,r:V) input
+RgetInstFldInst(c:C,l:V,b:V,f:F) input
+RputInstFldInst(c:C,b:V,f:F,r:V) input
+RgetStatFldInst(c:C,l:V,f:F) input
+RputStatFldInst(c:C,f:F,r:V) input
+
+DIC(c:C,i:I,c:C) input
+refineCIC(c:C,i:I,c:C)
+
+argCopy(i:I0,u:V1,m:M0,v:V0) input
+retCopy(i:I0,u:V0,m:M0,v:V1) input
+DVDV(c:C,u:V,d:C,v:V) input
+
+refineCVCV(c:C,u:V,d:C,v:V) output
+
+refineCI(c:C,i:I) output
+refineCM(c:C,m:M) output
+
+toBeRefinedCICM(c1:C,i:I,c2:C,m:M) input
+toBeRefinedCVC(c1:C,v:V,c2:C) input
+toBeRefinedFC(f:F,c:C) input
+toBeRefinedCFC(c1:C,f:F,c2:C) input
+
+CICM(c1:C,i:I,c2:C,m:M) input
+CVC(c1:C,v:V,c2:C) input
+DVC(c1:C,v:V,c2:C) input
+FC(f:F,c:C) input
+CFC(c1:C,f:F,c2:C) input
+refineCICM(c1:C,i:I,c2:C,m:M) output
+refineCVC(c1:C,v:V,c2:C) output
+refineFC(f:F,c:C) output
+refineCFC(c1:C,f:F,c2:C) output
+
+MV(m:M,v:V) input
+
+refineH(h:H) output
+refineI(i:I) output
+refineM(m:M) output
+refineV(v:V) output
+
+#####################################################################
+# constraints
+#####################################################################
+
+epsilonCV(c,v) :- epsilonV(v), MV(m,v), reachableCM(c,m).
+
+refineCICM(c,i,d,m) :- toBeRefinedCICM(c,i,d,m), CICM(c,i,d,m).
+refineCVC(c,v,o)    :- toBeRefinedCVC(c,v,o), CVC(c,v,o), !epsilonV(v).
+refineCVC(c,v,o)    :- toBeRefinedCVC(0,v,o), DVC(c,v,o), epsilonCV(c,v).
+refineFC(f,c)       :- toBeRefinedFC(f,c), FC(f,c).
+refineCFC(c1,f,c2)  :- toBeRefinedCFC(c1,f,c2), CFC(c1,f,c2).
+
+###
+
+refineH(h) :- RobjValAsgnInst(c,l,h), CHC(c,h,o), refineCVC(c,l,o), refinableCH(c,h).
+
+refineI(i) :- kcfaSenM(m), refineCICM(c,i,_,m), refinableCI(c,i).
+
+###
+
+refineCVC(c,r,c1) :- RobjVarAsgnInst(c,l,r), DVC(c,r,c1), refineCVC(c,l,c1).
+
+refineCVC(c,b,c1)  :- RgetInstFldInst(c,l,b,f), DVC(c,b,c1), CFC(c1,f,c2), refineCVC(c,l,c2). split
+refineCFC(c1,f,c2) :- RgetInstFldInst(c,l,b,f), DVC(c,b,c1), CFC(c1,f,c2), refineCVC(c,l,c2). split
+
+refineFC(f,o) :- RgetStatFldInst(c,l,f), FC(f,o), refineCVC(c,l,o).
+
+refineCVC(c,b,c1) :- RputInstFldInst(c,b,f,r), DVC(c,b,c1), DVC(c,r,c2), refineCFC(c1,f,c2). split
+refineCVC(c,r,c2) :- RputInstFldInst(c,b,f,r), DVC(c,b,c1), DVC(c,r,c2), refineCFC(c1,f,c2). split
+
+refineCVC(c,r,o)  :- RputStatFldInst(c,f,r), DVC(c,r,o), refineFC(f,o).
+
+###
+
+clinitM(m) :- clinitTM(_,m).
+nonRootM(m) :- m!=0, !clinitM(m).
+
+refineV(v) :- refinableV(v), refineCVC(0,v,_).
+refineM(m) :- refinableM(m), refineCM(0,m).
+
+refineCM(c,m) :- MV(m,v), refineCVC(c,v,_).
+refineCM(c,m) :- MI(m,i), refineCI(c,i).
+
+refineCICM(c,i,d,m) :- CICM(c,i,d,m), refineCM(d,m).
+
+refineCI(c,i) :- refineCICM(c,i,_,_).
+
+###
+
+refineCVC(c,v,o) :- IinvkArg0(i,v), DVC(c,v,o), refineCIC(c,i,o).
+
+refineCIC(c,i,o) :- ctxtInsICM(i,o,m), DIC(c,i,o), refineCICM(c,i,0,m).
+refineCIC(c,i,o) :- kobjSenICM(i,o,m), DIC(c,i,o), refineCICM(c,i,o,m).
+
+refineCIC(c,i,o) :- ctxtInsSpecIM(i,m), DIC(c,i,o), refineCICM(c,i,o,m).
+refineCIC(c,i,o) :- kobjSenSpecIM(i,m), DIC(c,i,o), refineCICM(c,i,o,m).
+
+###
+# arg/ret copy
+
+refineCVCV(c,u,d,v) :- DVDV(c,u,d,v), DVC(d,v,o), refineCVC(c,u,o). split
+refineCVC(d,v,o)    :- DVDV(c,u,d,v), DVC(d,v,o), refineCVC(c,u,o). split
+
+refineCICM(c,i,d,m) :- argCopy(i,u,m,v), CICM(c,i,d,m), refineCVCV(d,v,c,u). split
+refineCICM(c,i,d,m) :- retCopy(i,u,m,v), CICM(c,i,d,m), refineCVCV(c,u,d,v). split
+

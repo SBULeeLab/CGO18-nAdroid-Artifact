@@ -1,0 +1,62 @@
+# Copyright (c) 2008-2010, Intel Corporation.
+# Copyright (c) 2006-2007, The Trustees of Stanford University.
+# All rights reserved.
+# Licensed under the terms of the New BSD License.
+
+# Author: Mayur Naik (mhn@cs.stanford.edu)
+# name=deadlock-nonreent-exclude-dlog
+
+.include "M.dom"
+.include "V.dom"
+.include "C.dom"
+.include "A.dom"
+.include "L.dom"
+.include "N.dom"
+.include "I.dom"
+
+.bddvarorder A0_M0xI0_L0xL1_V0_C0xC1_N0xN1
+
+###
+# Relations
+###
+
+NC(n:N0,c:C0) input
+NL(n:N0,l:L0) input
+ML(m:M0,l:L0) input
+MI(m:M0,i:I0) input
+threadAOCM(a:A0,o:C0,c:C1,m:M0) input
+thrSenAbbrCICM(c:C0,i:I0,d:C1,n:M0) input
+transLI(l:L0,i:I0) input
+transLL(l1:L0,l2:L1) input
+
+NCL(n:N0,c:C0,l:L0)
+NCM(n:N0,c:C0,m:M0)
+
+syncCMN(c:C0,m:M0,n:N0)
+syncCIN(c:C0,i:I0,n:N0)
+
+syncCMNN(c:C0,m:M0,n1:N0,n2:N1)
+syncCINN(c:C0,i:I0,n1:N0,n2:N1)
+syncTNN(t:A0,n1:N0,n2:N1) output
+
+###
+# Constraints
+###
+
+NCL(n,c,l) :- NC(n,c), NL(n,l).
+NCM(n,c,m) :- NCL(n,c,l), ML(m,l).
+
+syncCMN(c,m,n) :- NCM(n,c,m).
+syncCIN(c,i,n) :- thrSenAbbrCICM(c,i,d,m), syncCMN(d,m,n).
+syncCMN(c,m,n) :- syncCIN(c,i,n), MI(m,i).
+
+syncCMNN(c,m,n1,n2) :- NCL(n1,c,l), transLI(l,i), MI(m,i), syncCIN(c,i,n2).
+ 
+syncCMNN(c,m,n1,n2) :- transLL(l1,l2), NCL(n1,c,l1), NCL(n2,c,l2), ML(m,l1), ML(m,l2).
+
+syncCINN(c,i,n1,n2) :- thrSenAbbrCICM(c,i,d,m), syncCMNN(d,m,n1,n2).
+
+syncCMNN(c,m,n1,n2) :- MI(m,i), syncCINN(c,i,n1,n2).
+
+syncTNN(t,n1,n2) :- threadAOCM(t,_,c,m), syncCMNN(c,m,n1,n2).
+

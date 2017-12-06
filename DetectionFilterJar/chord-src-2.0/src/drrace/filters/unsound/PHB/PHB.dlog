@@ -1,0 +1,51 @@
+# name=PHB-dlog
+
+.include "C.dom"
+.include "M.dom"
+.include "A.dom"
+
+.bddvarorder C0xC1_M0xM1_A0xA1
+
+###
+# Relations
+###
+
+runOnLooperThread(t:A0) input
+
+reachableTCM(t:A0,c:C0,m:M0) input
+threadAOCM(t:A0,o:C0,c:C1,m:M0) input
+CMCM(c0:C0,m0:M0,c1:C1,m1:M1) input
+
+PHB(t0:A0,t1:A1) output
+
+###
+# Constraints
+###
+
+# eventReachable(t0,t1)
+# t0 runs on looper thread
+# t1 is all the threads can be reached by t0
+
+eventReachable(t0,t1):- \
+	runOnLooperThread(t0), \
+	reachableTCM(t0,c0,m0), \
+	CMCM(c0,m0,c1,m1), \
+	threadAOCM(t1,_,c1,m1), \
+	t1!=t0.
+eventReachable(t0,t1):- \
+	eventReachable(t0,t2), \
+	reachableTCM(t2,c2,m2), \
+	CMCM(c2,m2,c1,m1), \
+	threadAOCM(t1,_,c1,m1).
+
+###
+
+# PHB(t0,t1)
+# Post Happen Before Order
+# t0 and t1 both run on looper thread
+# t1 can be reached by t0
+
+PHB(t0,t1) :- \
+	eventReachable(t0,t1), runOnLooperThread(t1).
+
+###

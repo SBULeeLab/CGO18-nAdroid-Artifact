@@ -1,0 +1,30 @@
+# name=modelMethod-dlog
+
+.include "M.dom"
+.include "K.dom"
+
+.bddvarorder M0_K0 
+
+###
+# Relations
+###
+
+modelMethod(k0:K0,m0:M0) input
+
+onServiceConnectedM(m:M0) output
+onServiceDisconnectedM(m:M0) output
+onReceiveM(m:M0) output
+handleMessageM(m:M0) output
+
+###
+# Constraints
+###
+
+onServiceConnectedM(m) :- modelMethod(0,m).
+onServiceDisconnectedM(m) :- modelMethod(1,m).
+
+onReceiveM(m) :- modelMethod(2,m).
+
+handleMessageM(m) :- modelMethod(3,m).
+	
+###

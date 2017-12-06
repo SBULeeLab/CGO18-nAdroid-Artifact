@@ -1,0 +1,99 @@
+# Copyright (c) 2008-2010, Intel Corporation.
+# Copyright (c) 2006-2007, The Trustees of Stanford University.
+# All rights reserved.
+# Licensed under the terms of the New BSD License.
+
+# Author: Mayur Naik (mhn@cs.stanford.edu)
+# name=refine-mhp-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "I.dom"
+.include "M.dom"
+.include "P.dom"
+.include "V.dom"
+.include "Z.dom"
+
+.bddvarorder A0xA1xA2xA3_I0xM0xM1xP0xP1xP2_C0xC1
+
+###
+# Relations
+###
+
+PP(p:P,q:P) input
+MPhead(m:M,p:P) input
+MPtail(m:M,p:P) input
+PI(p:P,i:I) input
+CICM(c1:C,i:I,c2:C,m:M) input
+threadAOCM(t:A,o:C,c:C,m:M) input
+threadAC(t:A,c:C) 
+ForkPMcs   (caller:C,p1:P,callee:C) input
+ForkPHcs   (caller:C,p1:P,callee:C,p2:P) input
+NonForkPMcs(caller:C,p1:P,callee:C,m2:M) input
+NonForkPHcs(caller:C,p1:P,callee:C,p2:P) input
+NonForkPTcs(caller:C,p1:P,callee:C,p2:P) input
+PathEdge(c:C,p:P,this:A,sThat:A,tThat:A) input
+SummEdge(c:C,p:P,this:A,sThat:A,tThat:A) input
+
+toBeRefinedMHP(c:C,p:P,t:A,t2:A) input
+
+toBeRefinedCICM(c:C,i:I,c2:C,m:M) output
+refineForkPMcs   (c:C,p:P,c2:C)
+refineForkPHcs   (c:C,p:P,c2:C,p2:P)
+refineNonForkPMcs(c:C,p:P,c2:C,m2:M)
+refineNonForkPHcs(c:C,p:P,c2:C,p2:P)
+refineNonForkPTcs(c:C,p:P,c2:C,p2:P)
+refinePathEdge(c:C,p:P,t:A,t1:A,t2:A) 
+refineSummEdge(c:C,p:P,t:A,t1:A,t2:A)
+
+###
+# Constraints
+###
+
+toBeRefinedCICM(c,i,d,m) :- refineNonForkPMcs(c,p,d,m), CICM(c,i,d,m), m!=1, PI(p,i).
+
+refineNonForkPMcs(c,p,d,m) :- refineNonForkPHcs(c,p,d,h), NonForkPMcs(c,p,d,m), MPhead(m,h).
+refineNonForkPMcs(c,p,d,m) :- refineNonForkPTcs(c,p,d,t), NonForkPMcs(c,p,d,m), MPtail(m,t).
+
+toBeRefinedCICM(c,i,d,1) :- refineForkPMcs(c,p,d), CICM(c,i,d,1), PI(p,i).
+
+refineForkPMcs(c,p,d) :- refineForkPHcs(c,p,d,h), ForkPMcs(c,p,d), MPhead(1,h).
+
+threadAC(a,c) :- threadAOCM(a,_,c,1).
+
+refinePathEdge(c,p,t,t1,t2) :- PathEdge(c,p,t,t1,t2), PP(p,q), refinePathEdge(c,q,t,t1,t2).
+
+refineNonForkPHcs(c,p,d,q)  :- NonForkPHcs(c,p,d,q), PathEdge(c,p,t,_ ,t1), t3=t1, refinePathEdge(d,q,t,t1,t3).
+refinePathEdge(c,p,t,t2,t1) :- NonForkPHcs(c,p,d,q), PathEdge(c,p,t,t2,t1), t3=t1, refinePathEdge(d,q,t,t1,t3).
+
+refineNonForkPTcs(c,p,d,q)  :- NonForkPTcs(c,p,d,q), PathEdge(d,q,t,t1,t2), refineSummEdge(c,p,t,t1,t2).
+refinePathEdge(d,q,t,t1,t2) :- NonForkPTcs(c,p,d,q), PathEdge(d,q,t,t1,t2), refineSummEdge(c,p,t,t1,t2).
+
+refineSummEdge(c,p,t,t2,t3) :- SummEdge(c,p,t,t2,t3), PathEdge(c,p,t,t1,t2), PP(p,r), refinePathEdge(c,r,t,t1,t3). 
+refinePathEdge(c,p,t,t1,t2) :- SummEdge(c,p,t,t2,t3), PathEdge(c,p,t,t1,t2), PP(p,r), refinePathEdge(c,r,t,t1,t3).
+
+refineForkPMcs(c,p,d)       :- ForkPMcs(c,p,d), PathEdge(c,p,t,t1,_ ), PP(p,r), threadAC(t2,d), refinePathEdge(c,r,t,t1,t2).
+refinePathEdge(c,p,t,t1,t3) :- ForkPMcs(c,p,d), PathEdge(c,p,t,t1,t3), PP(p,r), threadAC(t2,d), refinePathEdge(c,r,t,t1,t2).
+
+refineForkPMcs(c,p,d)     :- ForkPMcs(c,p,d), PathEdge(c,p,x,y,_), PP(p,r), threadAC(z,d), PathEdge(d,q,z,0,u), MPtail(1,q), refinePathEdge(c,r,x,y,u). 
+refinePathEdge(c,p,x,y,v) :- ForkPMcs(c,p,d), PathEdge(c,p,x,y,v), PP(p,r), threadAC(z,d), PathEdge(d,q,z,0,u), MPtail(1,q), refinePathEdge(c,r,x,y,u).
+refinePathEdge(d,q,z,0,u) :- ForkPMcs(c,p,d), PathEdge(c,p,x,y,_), PP(p,r), threadAC(z,d), PathEdge(d,q,z,0,u), MPtail(1,q), refinePathEdge(c,r,x,y,u). 
+
+refineForkPHcs(c,p,d,h)   :- ForkPHcs(c,p,d,h), PathEdge(c,p,y,_,_), threadAC(x,d), z=y, refinePathEdge(d,h,x,y,z).
+refinePathEdge(c,p,y,a,b) :- ForkPHcs(c,p,d,h), PathEdge(c,p,y,a,b), threadAC(x,d), z=y, refinePathEdge(d,h,x,y,z).
+
+refineForkPHcs(c,p,d,h)   :- ForkPHcs(c,p,d,h), PathEdge(c,p,_,_,y), threadAC(x,d), z=y, refinePathEdge(d,h,x,y,z).
+refinePathEdge(c,p,a,b,y) :- ForkPHcs(c,p,d,h), PathEdge(c,p,a,b,y), threadAC(x,d), z=y, refinePathEdge(d,h,x,y,z).
+
+refineForkPHcs(c,p,d,h)   :- ForkPHcs(c,p,d,h), PathEdge(c,p,_,_,x), threadAC(x,e), threadAC(y,d), z=y, refinePathEdge(e,h,x,y,z).
+refinePathEdge(c,p,a,b,x) :- ForkPHcs(c,p,d,h), PathEdge(c,p,a,b,x), threadAC(x,e), threadAC(y,d), z=y, refinePathEdge(e,h,x,y,z).
+
+refinePathEdge(c,p,t1,_,t2) :- toBeRefinedMHP(c,p,t1,t2).
+
+# from deadlock feedback.dlog:
+# toBeRefinedCMCM(c:C0,m:M0,d:C1,m:M1) input
+MI(m:M0,i:I0) input
+thrSenAbbrCICM(c:C0,i:I0,d:C1,m:M0) input
+
+#toBeRefinedCICM(c,i,d,n) :- toBeRefinedCMCM(c,m,d,n), MI(m,i), thrSenAbbrCICM(c,i,d,n).
+toBeRefinedCICM(c,i,d,n) :- MI(_,i), thrSenAbbrCICM(c,i,d,n).

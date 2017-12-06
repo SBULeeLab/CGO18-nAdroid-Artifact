@@ -1,0 +1,51 @@
+# name=eventCreateThread-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "M.dom"
+
+.bddvarorder C0xC1_M0xM1_A0xA1
+
+###
+# Relations
+###
+
+threadEvent(t:A0) input
+
+reachableTCM(t:A0,c:C0,m:M0) input
+relevantTCM(t:A0,c:C0,m:M0) input
+threadAOCM(t:A0,o:C0,c:C1,m:M0) input
+CMCM(c0:C0,m0:M0,c1:C1,m1:M1) input
+
+###
+# Constraints
+###
+
+# native thread t0 can reach native thread t1 through native thread creation.
+threadReachableThread(t0,t1) :- \
+	!threadEvent(t0), !threadEvent(t1), t1!=t0, \
+	reachableTCM(t0,c0,m0), \
+	CMCM(c0,m0,c1,m1), \
+	threadAOCM(t1,_,c1,m1).
+threadReachableThread(t0,t1):- \
+	!threadEvent(t1), t1!=t0, \
+	threadReachableThread(t0,t2), \
+	reachableTCM(t2,c2,m2), \
+	CMCM(c2,m2,c1,m1), \
+	threadAOCM(t1,_,c1,m1).
+
+###
+
+# event thread t0 can reach native thread t1 through native thread creation. 
+eventCreateThread(t0:A0,t1:A1) output	
+eventCreateThread(t0,t1) :- \
+	threadEvent(t0), !threadEvent(t1), t1!=t0, \
+	reachableTCM(t0,c0,m0), \
+	CMCM(c0,m0,c1,m1), \
+	threadAOCM(t1,_,c1,m1).
+eventCreateThread(t0,t1) :- \
+	eventCreateThread(t0,t2), \
+	threadReachableThread(t2,t1), \
+	t1!=t0.
+
+###

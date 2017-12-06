@@ -1,0 +1,20 @@
+# name=test-dlog
+
+.include "T.dom"
+.include "C.dom"
+.include "M.dom"
+.include "A.dom"
+
+.bddvarorder M0_T0_C0_A0
+
+###
+# Relations
+###
+componentTCM(component:T0,t:A0,c:C0,m:M0) input
+componentTCMOut(component:T0,t:A0,c:C0,m:M0) output
+
+###
+# Constraints
+###
+
+componentTCMOut(component,t,c,m) :- componentTCM(component,t,c,m).

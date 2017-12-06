@@ -1,0 +1,86 @@
+# Copyright (c) 2008-2010, Intel Corporation.
+# Copyright (c) 2006-2007, The Trustees of Stanford University.
+# All rights reserved.
+# Licensed under the terms of the New BSD License.
+
+# Author: Mayur Naik (mhn@cs.stanford.edu)
+# name=mhp-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "I.dom"
+.include "M.dom"
+.include "P.dom"
+.include "V.dom"
+.include "Z.dom"
+
+.bddvarorder A0xA1xA2_I0xM0xM1xP0xP1xP2_C0xC1
+
+###
+# Relations
+###
+
+PP(p:P,q:P) input
+MPhead(m:M,p:P) input
+MPtail(m:M,p:P) input
+PI(p:P,i:I) input
+CICM(c1:C,i:I,c2:C,m:M) input
+threadAOCM(t:A,o:C,c:C,m:M) input
+threadAC(t:A,c:C) 
+
+ForkPMcs   (caller:C,p1:P,callee:C) output
+ForkPHcs   (caller:C,p1:P,callee:C,p2:P) output
+NonForkPMcs(caller:C,p1:P,callee:C,m2:M) output
+NonForkPHcs(caller:C,p1:P,callee:C,p2:P) output
+NonForkPTcs(caller:C,p1:P,callee:C,p2:P) output
+
+PathEdge(c:C,p:P,this:A,sThat:A,tThat:A) output
+# defined only for ordinary calls p (not thread start calls)
+SummEdge(c:C,p:P,this:A,sThat:A,tThat:A) output
+
+mhp(c:C,p:P,t1:A,t2:A) output
+
+###
+# Constraints
+###
+
+NonForkPMcs(c,p,d,m) :- CICM(c,i,d,m), m!=1, PI(p,i).
+NonForkPHcs(c,p,d,h) :- NonForkPMcs(c,p,d,m), MPhead(m,h).
+NonForkPTcs(c,p,d,t) :- NonForkPMcs(c,p,d,m), MPtail(m,t).
+ForkPMcs(c,p,d) :- CICM(c,i,d,1), PI(p,i).
+ForkPHcs(c,p,d,h) :- ForkPMcs(c,p,d), MPhead(1,h).
+threadAC(t,c) :- threadAOCM(t,_,c,1).
+
+# PathEdge(c,p,this,sThat,tThat) 
+# There exists a unique method m such that:
+# 1. it is invoked in a context c and
+# 2. it contains node p
+# Above predicate denotes a path edge for [c,m]:
+# from dataflow fact (this,sThat) at head node of m
+# to   dataflow fact (this,tThat) at node p
+
+PathEdge(0,0,1,0,0).
+
+# assumptions about relation PP:
+# it does not contain edges from call nodes to head nodes
+# it does not contain edges from tail nodes to call nodes
+PathEdge(c,q,t,t1,t2) :- PathEdge(c,p,t,t1,t2), PP(p,q).
+
+# ordinary calls
+
+PathEdge(d,q,t,t1,t2) :- NonForkPHcs(c,p,d,q) , PathEdge(c,p,t,_ ,t2), t1=t2.
+SummEdge(c,p,t,t1,t2) :- NonForkPTcs(c,p,d,q) , PathEdge(d,q,t,t1,t2).
+PathEdge(c,r,t,t1,t3) :- SummEdge(c,p,t,t2,t3), PathEdge(c,p,t,t1,t2), PP(p,r).
+
+# thread fork calls
+
+PathEdge(c,r,t,t1,t2) :- ForkPMcs(c,p,d), PathEdge(c,p,t,t1,_), PP(p,r), threadAC(t2,d).
+PathEdge(c,r,t,t1,t3) :- ForkPMcs(c,p,d), PathEdge(c,p,t,t1,_), \
+	PP(p,r), threadAC(t2,d), PathEdge(d,q,t2,0,t3), MPtail(1,q). 
+
+PathEdge(d,h,x,y,z) :- ForkPHcs(c,p,d,h), PathEdge(c,p,y,_,_), threadAC(x,d), z=y. split
+PathEdge(d,h,x,y,z) :- ForkPHcs(c,p,d,h), PathEdge(c,p,_,_,y), threadAC(x,d), z=y. split
+PathEdge(e,h,x,y,z) :- ForkPHcs(c,p,d,h), PathEdge(c,p,_,_,x), threadAC(x,e), threadAC(y,d), z=y. split
+
+mhp(c,p,t1,t2) :- PathEdge(c,p,t1,_,t2), t1!=0, t2!=0.
+

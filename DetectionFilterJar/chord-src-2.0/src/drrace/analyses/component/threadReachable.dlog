@@ -1,0 +1,65 @@
+# name=threadReachable-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "M.dom"
+.include "T.dom"
+
+.bddvarorder M0xM1_A0xA1_C0xC1_T0
+
+###
+# Relations
+###
+
+componentTCM(component:T0,t0:A0,c0:C0,m0:M0) input
+
+reachableTCM(t:A0,c:C0,m:M0) input
+CMCM(c0:C0,m0:M0,c1:C1,m1:M1) input
+threadAOCM(t:A0,o:C0,c:C1,m:M0) input
+
+###
+# Constraints
+###
+
+# threadReachable(t0,t1)
+# t0: thread of entry callback of android component
+# t1: thread can be reached from t0
+threadReachable(t0:A0,t1:A1) output
+
+threadReachable(t0,t1):- \
+	componentTCM(_,t0,_,_), \
+	reachableTCM(t0,c0,m0), \
+	CMCM(c0,m0,c1,m1), \
+	threadAOCM(t1,_,c1,m1), \
+	t1!=t0.
+
+threadReachable(t0,t1):- \
+	threadReachable(t0,t2), \
+	reachableTCM(t2,c2,m2), \
+	CMCM(c2,m2,c1,m1), \
+	threadAOCM(t1,_,c1,m1).
+
+###
+
+# threadReachableIncludeSelf(t0,t1)
+# t0: thread of entry callback of android component
+# t1: thread can be reached from t0 and t0 itself
+threadReachableIncludeSelf(t0:A0,t1:A1) output
+
+threadReachableIncludeSelf(t0,t1) :- threadReachable(t0,t1).
+threadReachableIncludeSelf(t0,t1) :- componentTCM(_,t0,_,_), t1=t0.
+
+###
+
+# entryCallbackReachT(m0,t1)
+# This relation is used for result printer
+# m0: an entry callback method
+# t0: thread of m0
+# t1: thread can be reached from t0 and t0 itself
+
+entryCallbackReachT(m0:M0,t1:A0) output
+entryCallbackReachT(m0,t1) :- \
+	threadReachableIncludeSelf(t0,t1), \
+	componentTCM(_,t0,_,m0).
+
+###

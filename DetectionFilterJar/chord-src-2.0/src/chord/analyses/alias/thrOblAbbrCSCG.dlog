@@ -1,0 +1,38 @@
+# Copyright (c) 2008-2010, Intel Corporation.
+# Copyright (c) 2006-2007, The Trustees of Stanford University.
+# All rights reserved.
+# Licensed under the terms of the New BSD License.
+
+# Author: Mayur Naik (mhn@cs.stanford.edu)
+# name=thrOblAbbrCSCG-dlog
+
+.include "I.dom"
+.include "M.dom"
+.include "C.dom"
+
+.bddvarorder I0xM0xM1_C0xC1
+
+###
+# Relations
+###
+
+CICM(c:C,i:I,d:C,m:M) input
+MI(m:M,i:I) input
+
+thrOblAbbrRootCM(c:C,m:M) output
+thrOblAbbrReachableCM(c:C,m:M) output
+thrOblAbbrCICM(c:C,i:I,d:C,m:M) output
+thrOblAbbrCMCM(c:C,m:M,d:C,n:M) output
+
+###
+# Constraints
+###
+
+thrOblAbbrRootCM(0,0).
+
+thrOblAbbrReachableCM(c,m) :- thrOblAbbrRootCM(c,m).
+thrOblAbbrReachableCM(d,n) :- thrOblAbbrCICM(_,_,d,n).
+
+thrOblAbbrCICM(c,i,d,n) :- thrOblAbbrReachableCM(c,m), MI(m,i), CICM(c,i,d,n).
+thrOblAbbrCMCM(c,m,d,n) :- thrOblAbbrCICM(c,i,d,n), MI(m,i).
+

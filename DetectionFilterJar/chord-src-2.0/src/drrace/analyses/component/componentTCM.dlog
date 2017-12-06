@@ -1,0 +1,51 @@
+# name=componentTCM-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "M.dom"
+.include "I.dom"
+.include "T.dom"
+
+.bddvarorder M0_A0_C0xC1_T0_I0
+
+###
+# Relations
+###
+
+componentCallbackPair(component:T0,m0:M0) input
+componentHandleMethodPair(component:T0,m0:M0) input
+
+MI(m:M0,i:I0) input
+CICM(c0:C0,i:I0,c1:C1,m1:M0) input
+threadAOCM(t:A0,o:C0,c:C1,m:M0) input
+
+###
+# Constraints
+###
+
+entryStartTCM(component,t,c,m) :- \
+	componentHandleMethodPair(component,m0), MI(m0,i0), CICM(_,i0,c,m), \
+	threadAOCM(t,_,c,m). 
+	
+entryRunTCM0(component,t,c,m) :- \
+	entryStartTCM(component,t0,c0,m0), \
+	MI(m0,i0), CICM(c0,i0,c,m), m!=1, t=t0.
+
+entryRunTCM1(component,t,c,m) :- \
+	entryRunTCM0(component,t0,c0,m0), \
+	MI(m0,i0), CICM(c0,i0,c,m), m!=1, t=t0.
+
+###
+
+# componentTCM(component,t,c,m)
+# component: type of the component
+# m: entry callback of the component
+# c: context of the component
+# t: thread of the entry callback
+componentTCM(component:T0,t:A0,c:C0,m:M0) output
+componentTCM(component,t,c,m) :- \
+	entryRunTCM1(component,t0,c0,m0), \
+	MI(m0,i0), CICM(c0,i0,c,m), m!=1, t=t0, \
+	componentCallbackPair(component,m).
+
+###

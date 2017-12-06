@@ -1,0 +1,130 @@
+# name=modelMethodThread-dlog
+
+.include "C.dom"
+.include "M.dom"
+.include "A.dom"
+.include "K.dom"
+
+.bddvarorder C0xC1_M0xM1_A0_K0
+
+###
+# Relations
+###
+
+handlePostRunnableM(m0:M0) input
+runnableM(k0:K0,m0:M0) input
+
+relevantTCM(t:A0,c:C0,m:M0) input
+
+threadAOCM(t:A0,o:C0,c:C1,m:M0) input
+CMCM(c0:C0,m0:M0,c1:C1,m1:M1) input
+
+###
+# Constraints
+###
+
+################################################################################
+
+#DoInBackground
+
+asyncTask_DIB_RunM(m:M0) output
+asyncTask_DIB_RunM(m) :- runnableM(1,m).
+
+asyncTaskThread_DIB(t:A0) output
+asyncTaskThread_DIB(t) :- \
+	asyncTask_DIB_RunM(m), relevantTCM(t,_,m).
+
+###
+
+#PreExe
+
+asyncTask_onPre_RunM(m:M0) output
+asyncTask_onPre_RunM(m) :- runnableM(2,m).
+
+asyncTaskThread_onPre(t:A0) output
+asyncTaskThread_onPre(t) :- \
+	asyncTask_onPre_RunM(m), relevantTCM(t,_,m).
+
+###
+
+#PostExe
+
+asyncTask_onPost_RunM(m:M0) output
+asyncTask_onPost_RunM(m) :- runnableM(3,m).
+
+asyncTaskThread_onPost(t:A0) output
+asyncTaskThread_onPost(t) :- \
+	asyncTask_onPost_RunM(m), relevantTCM(t,_,m).
+
+###
+	
+#onProgressUpdate
+
+asyncTask_onProgress_RunM(m:M0) output
+asyncTask_onProgress_RunM(m) :- runnableM(4,m).
+
+asyncTaskThread_onProgress(t:A0) output
+asyncTaskThread_onProgress(t) :- \
+	asyncTask_onProgress_RunM(m), relevantTCM(t,_,m).
+	
+###
+
+asyncTaskThread(t:A0) output
+asyncTaskThread(t) :- asyncTaskThread_DIB(t).
+asyncTaskThread(t) :- asyncTaskThread_onPre(t).
+asyncTaskThread(t) :- asyncTaskThread_onPost(t).
+asyncTaskThread(t) :- asyncTaskThread_onProgress(t).
+
+################################################################################
+
+#handleMessage
+
+handleMessage_RunM(m:M0) output
+handleMessage_RunM(m) :- runnableM(5,m).
+
+handleMessageThread(t:A0) output
+handleMessageThread(t) :- \
+	handleMessage_RunM(m), relevantTCM(t,_,m).
+
+################################################################################
+
+#onServiceConnected
+
+onServiceConnectedRunM(m:M0) output
+onServiceConnectedRunM(m) :- runnableM(6,m).
+
+servicConnectedThread(t:A0) output
+servicConnectedThread(t) :- \
+	onServiceConnectedRunM(m), relevantTCM(t,_,m).
+
+###
+
+#onServiceDisconnected
+
+onServiceDisconnectedRunM(m:M0) output
+onServiceDisconnectedRunM(m) :- runnableM(7,m).
+	
+serviceDisconnectedThread(t:A0) output
+serviceDisconnectedThread(t) :- \
+	onServiceDisconnectedRunM(m), relevantTCM(t,_,m).
+
+################################################################################
+
+#onReceive
+
+broadcastReceiver_RunM(m:M0) output
+broadcastReceiver_RunM(m) :- runnableM(8,m).
+
+broadcastReceiverThread(t:A0) output
+broadcastReceiverThread(t) :- \
+	broadcastReceiver_RunM(m), relevantTCM(t,_,m).
+		
+################################################################################
+
+#handlePostRunnable
+handlePostRunnableThread(t:A0) output
+handlePostRunnableThread(t1) :- \
+	handlePostRunnableM(m), \
+	CMCM(_,m,c1,m1), threadAOCM(t1,_,c1,m1).
+	
+################################################################################

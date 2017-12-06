@@ -1,0 +1,45 @@
+# Copyright (c) 2008-2010, Intel Corporation.
+# Copyright (c) 2006-2007, The Trustees of Stanford University.
+# All rights reserved.
+# Licensed under the terms of the New BSD License.
+
+# Author: Mayur Naik (mhn@cs.stanford.edu)
+# name=deadlock-escaping-include-dlog
+
+.include "M.dom"
+.include "V.dom"
+.include "C.dom"
+.include "L.dom"
+.include "P.dom"
+.include "N.dom"
+.include "T.dom"
+.include "F.dom"
+
+.bddvarorder F0_M0xP0_L0_T0_V0_C0xC1_N0
+
+###
+# Relations
+###
+
+NC(n:N0,c:C0) input
+NL(n:N0,l:L0) input
+PL(p:P0,l:L0) input
+syncLV(l:L0,v:V0) input
+syncLM(l:L0,m:M0) input
+thisMV(m:M0,v:V0) input
+MPhead(m:M0,p:P0) input
+escCPVO(c:C0,p:P0,v:V0,o:C1) input
+TM(t:T0,m:M0) input
+#clsTF(t:T0,f:F0) input
+FC(f:F0,c:C0) input
+statM(m:M0) input
+escNO(l:N0,o:C0) output
+
+###
+# Constraints
+###
+
+escNO(n,o) :- NC(n,c), NL(n,l), syncLV(l,v), PL(p,l), escCPVO(c,p,v,o).
+escNO(n,o) :- NC(n,c), NL(n,l), syncLM(l,m), thisMV(m,v), MPhead(m,p), escCPVO(c,p,v,o).
+#escNO(n,o) :- NL(n,l), syncLM(l,m), statM(m), TM(t,m), clsTF(t,f), FC(f,o).
+

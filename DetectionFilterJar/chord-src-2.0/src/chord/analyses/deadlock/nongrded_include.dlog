@@ -1,0 +1,77 @@
+# Copyright (c) 2008-2010, Intel Corporation.
+# Copyright (c) 2006-2007, The Trustees of Stanford University.
+# All rights reserved.
+# Licensed under the terms of the New BSD License.
+
+# Author: Mayur Naik (mhn@cs.stanford.edu)
+# name=deadlock-nongrded-include-dlog
+
+.include "I.dom"
+.include "M.dom"
+.include "V.dom"
+.include "C.dom"
+.include "A.dom"
+.include "L.dom"
+.include "N.dom"
+
+.bddvarorder A0xA1_I0xM0xM1_L0_V0_C0xC1xC2_L1_N0_N1
+
+###
+# Relations
+###
+
+threadAOCM(a:A0,o:C0,c:C1,m:M0) input
+MI(m:M0,i:I0) input
+thrSenAbbrCMCM(c:C0,m:M0,d:C1,n:M1) input
+thrSenAbbrCICM(c:C0,i:I0,d:C1,n:M0) input
+NC(n:N0,c:C0) input
+NL(n:N0,l:L0) input
+ML(m:M0,l:L0) input
+syncCLC(c:C,l:L,o:C) input
+transLI(l:L0,i:I0) input
+transLL(l1:L0,l2:L1) input
+transNN(n1:N0,n2:N1)
+
+NCL(n:N0,c:C0,l:L0)
+NCM(n:N0,c:C0,m:M0)
+syncNO(n:N0,o:C0)
+syncO(c:C0)
+invkLock(c:C0,i:I0,o:C1)
+relevantTCM(t:A0,c:C0,m:M0)
+unguardedCM(t:A0,c:C0,m:M0,o:C1)
+unguardedCI(t:A0,c:C0,i:I0,o:C1)
+guardedCM(t:A0,c:C0,m:M0,o:C1)
+guardedN(t:A0,n:N0,o:C0)
+
+# pair of threads t1 and t2 may hold a common lock
+# when they execute n1 and n2, respectively
+guarded(t1:A0,t2:A1,n1:N0,n3:N1) output
+
+###
+# Constraints
+###
+
+NCL(n,c,l) :- NC(n,c), NL(n,l).
+NCM(n,c,m) :- NCL(n,c,l), ML(m,l).
+
+syncNO(n,o) :- NCL(n,c,l), syncCLC(c,l,o).
+syncO(o) :- syncNO(_,o).
+
+invkLock(c,i,o) :- transLI(l,i), syncCLC(c,l,o).
+
+relevantTCM(t,c,m) :- threadAOCM(t,_,c,m).
+relevantTCM(t,d,n) :- relevantTCM(t,c,m), thrSenAbbrCMCM(c,m,d,n).
+
+unguardedCM(t,c,m,o) :- syncO(o), threadAOCM(t,_,c,m).
+unguardedCI(t,d,i,o) :- unguardedCM(t,d,m,o), MI(m,i), !invkLock(d,i,o).
+unguardedCM(t,d,n,o) :- unguardedCI(t,c,i,o), thrSenAbbrCICM(c,i,d,n).
+
+guardedCM(t,c,m,o) :- syncO(o), relevantTCM(t,c,m), !unguardedCM(t,c,m,o).
+
+transNN(n1,n2) :- transLL(l1,l2), NCL(n1,c,l1), NCL(n2,c,l2).
+
+guardedN(t,n,o) :- NCM(n,c,m), guardedCM(t,c,m,o).
+guardedN(_,n,o) :- transNN(n1,n), syncNO(n1,o).
+
+guarded(t1,t2,n1,n3) :- guardedN(t1,n1,o), guardedN(t2,n3,o).
+

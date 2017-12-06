@@ -1,0 +1,81 @@
+# name=drrace-filters-applying-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "E.dom"
+
+.bddvarorder E0_E1_C0xC1_A0_A1
+
+###
+# Relations
+###
+
+uaf_UsedForCmp_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_IfGuardE_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_AllocE_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_MHB_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_lock_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+
+uaf_UsedForRtn_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_UsedForParam_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_maybeAllocE_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_PHB_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_RHB_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_FHB_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+uaf_IHB_Excluded(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+
+uaf_sound_filters_applied(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_ToBeReported(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+
+###
+# Constraints
+###
+
+# sound filters: 
+# (1) Use For Compare
+# (2) If Guard 
+# (3) intra-Allocation
+# (4) Must Happen Before
+# (5) Lock with If Guard or intra-Allocation
+
+uaf_sound_filters_applied(t1,c1,e1,t2,c2,e2) :- \
+	uaf_UsedForCmp_Excluded(t1,c1,e1,t2,c2,e2), \
+	uaf_IfGuardE_Excluded(t1,c1,e1,t2,c2,e2), \
+	uaf_AllocE_Excluded(t1,c1,e1,t2,c2,e2), \
+	uaf_MHB_Excluded(t1,c1,e1,t2,c2,e2), \
+	uaf_lock_Excluded(t1,c1,e1,t2,c2,e2).
+	
+###
+
+# sound filters: 
+# (1) Use For Compare
+# (2) If Guard 
+# (3) intra-Allocation
+# (4) Must Happen Before
+# (5) Lock with If Guard or intra-Allocation
+#
+# unsound filters:
+# (1) Use For Return
+# (2) Use For Parameter
+# (3) Maybe-intra-Allocation
+# (4) Post Happen Before
+# (5) Resume Happen Before
+# (6) Finish Happen Before
+# (7) Imperative Happen Before (remove callback)
+
+uaf_ToBeReported(t1,c1,e1,t2,c2,e2) :- \
+	uaf_UsedForCmp_Excluded(t1,c1,e1,t2,c2,e2), \
+	uaf_IfGuardE_Excluded(t1,c1,e1,t2,c2,e2), \
+	uaf_AllocE_Excluded(t1,c1,e1,t2,c2,e2), \
+	uaf_MHB_Excluded(t1,c1,e1,t2,c2,e2), \
+	uaf_lock_Excluded(t1,c1,e1,t2,c2,e2), \
+	\
+	uaf_UsedForRtn_Excluded(t1,c1,e1,t2,c2,e2), \
+	uaf_UsedForParam_Excluded(t1,c1,e1,t2,c2,e2), \
+	uaf_maybeAllocE_Excluded(t1,c1,e1,t2,c2,e2), \
+	uaf_PHB_Excluded(t1,c1,e1,t2,c2,e2), \
+	uaf_RHB_Excluded(t1,c1,e1,t2,c2,e2), \
+	uaf_FHB_Excluded(t1,c1,e1,t2,c2,e2), \
+	uaf_IHB_Excluded(t1,c1,e1,t2,c2,e2).
+	
+###

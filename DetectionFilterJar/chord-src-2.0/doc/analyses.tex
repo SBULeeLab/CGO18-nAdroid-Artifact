@@ -1,0 +1,93 @@
+\xname{analyses}
+\chapter{Writing and Running Analyses}
+\label{chap:analyses}
+
+{\bf Under Construction}
+
+%Chord is built around the notion of modeling a program with relations.  A Chord analysis is a program component that operates on these relations.  It may consume zero or more relations, do some work on them, and then output zero or more relations.  It may also print output in some other format, perhaps human-readable text or HTML.  ``Relation'' here has the same meaning it does in the context of relational databases: a set of tuples, containing elements of one or more domains.
+
+%An analysis can be written in one of two ways: either as a Java class or as a datalog program. 
+
+%\section{Dependency information}
+
+%Chord has two kinds of projects: ``Classic'' and ``Modern''.  Despite the names, classic is effectively the standard at this point.  In the classic model, each analysis specifies the domains/relations it consumes and that it produces.  This defines an implicit dependency graph between analyses.  For a datalog analysis, the ``input'' and ``output'' keywords on relations specify the requirements and results of an analysis.  For a Java analysis, the \texttt{@Chord} annotation does so.  
+
+%\section{Domains}
+
+%In Chord, a domain is represented as a list of possible values.  The value types must be comparable and hashable.  Strings work, as do integers, \texttt{joeq} quads, fields, types, and so forth.  % % What are the required types?
+
+%Both domains and relations have names. The built-in relations are usually identified by a single capital letter.  Chord by default includes code for constructing a number of domains.
+
+%It is sometimes useful to construct new domains in the middle of an analysis, perhaps as a way of compactly describing some entities that required nontrivial work to find. Domains, for now, must be defined in Java. One key requirement is that construction must be deterministic: if the elements in a domain can be reordered from execution to execution on the same program, this can result in subtle and hard-to-track-down bugs.  
+
+%\begin{itemize}
+%\item
+%B is the domain of basic blocks.
+%\item
+%C is the domain of abstract calling contexts.
+%\item
+%E is the domain of program points that read or write a field.
+%\item
+%F is the domain of fields inside a class.
+%\item
+%H is the domain of allocation sites.
+%\item
+%I is the domain of invocation statements (method calls)
+%\item
+%L is the domain of lock acquisition points.
+%\item
+%M is the domain of program methods.
+%\item
+%P is the domain of simple statements. %SAY MORE HERE?
+%\item
+%R is the domain of lock release points.
+%\item
+%T is the domain of types (classes and primitives).
+%\item
+%V is the domain of reference-typed variables.
+%\item
+%W is the domain of loop head statements. %SAY MORE HERE?
+%\item
+%Z is a domain of integers corresponding to argument positions.The size of the domain is chosen to 
+%accommodate the method with the greatest number of arguments.
+%\end{itemize}
+
+%\section{Core relations}
+
+%Chord includes code to build a very large number of relations. These standard relations are very useful in writing your own analyses.  For example, relation \texttt{sub} includes all pairs of types \texttt{(t1, t2)} where \texttt{t2} is a subclass of \texttt{t1}.  Most of these standard relations are in the package \texttt{chord.rels}.
+
+%\section{Java analyses}
+
+%A Java analysis should extend JavaAnalysis or ProgramRel.  It's usually easiest if an analysis only produces one relation, in which case extending ProgramRel is the best approach.  If you extend ProgramRel, all the work of creating and saving the relation is taken care of for you; all you need to do is add tuples to the relation.Typically you do this by calling \texttt{super.add(...)} with the tuple you wish to add to the relation.  For forther convenience, you can implement one of the Visitor interfaces defined in \texttt{chord.program.visitors}.  This will force you to implement some \texttt{visit} methods that iterate over all elements in some domain, such as all methods or all invocation points. 
+
+%Sometimes, you need to create two different relations at the same time. In this case, the right approach is to extend JavaAnalysis, and explicitly create and save the relations on your own.  \textbf{Should reference JavaDoc.  Should make sure JavaDoc explains what you need to do to fill and save a relation}.
+
+%Regardless of which of these approaches you take, every Java analysis must have an \texttt{@Chord} annotation.  This annotation is a set of named fields.  At a minimum, this annotation must specify the name of the analysis.  If you extend ProgramRel, the name of the analysis will be treated as the same as that of the generated relation.  For example, \texttt{@Chord(name = "F")} is a valid annotation.  The name of the Java class that generates the relation is ignored by Chord -- only the annotation matters.
+
+%\textbf{MAYUR, IS SIGN MANDATORY?   IF NOT, WHEN CAN IT BE OMITTED?}
+
+%There are also other annotation fields available.  You may specify the dependencies of your analysis via \texttt{consumes = \{ "xyz"\}}.
+
+%If your analysis does not extend ProgramRel, you should also specify the relations that your analysis produces. You do this via the \texttt{produces} relation.
+
+%Should mention the signs fields.
+
+%The default value of property \code{chord.java.analysis.path} is \code{chord.std.java.analysis.path}:\code{chord.ext.java.analysis.path}, where the defalt value of \code{chord.std.java.analysis.path} is the location of file \code{chord.jar}, and the default value of \code{chord.ext.java.analysis.path} is empty (users defining their own Java analyses are expected to set the latter property).
+
+%The default value of property \code{chord.dlog.analysis.path} is \code{chord.std.dlog.analysis.path}:\code{chord.ext.java.analysis.path}, where the defalt value of \code{chord.std.java.analysis.path} is the location of file \code{chord.jar}, and the default value of \code{chord.ext.java.analysis.path} is empty (users defining their own Java analyses are expected to set the latter property).
+
+%\section{Running an Analysis}
+%\label{sec:running-analysis}
+
+%Running a Chord analysis is straightforward.  The property  \texttt{chord.run.analyses} is a list of analyses to be run. Chord will compute the listed dependencies for each of these relations and run these prerequisites before running the analysis you specify.  
+
+%Chord has two kinds of projects: ``Classic'' and ``Modern''.  Despite the names, classic is effectively the standard at this point.  In the classic model, there is an implicit dependency graph between analyses. For a datalog analysis (program), the ``input'' and ``output'' keywords in defining a relation specify the requirements and outputs of an analysis.  For a Java analysis, the \texttt{@Chord} annotation does so. See the section ``writing a Java analysis'' for details.
+
+%\texttt{chord.print.rels} is a list of relations to dump to disk. Note that these relations are printed in a somewhat unfriendly format; this is more useful for debugging than for interpreting programs. Note also that listing a relation here does not cause it to be computed; you will get an error at the end of your Chord execution if you ask it to print a relation that has not been computed.
+
+%List of names of program analyses to be run in order.
+%chord.java.analysis.path    path    Classpath containing program analyses in Java (i.e. @Chord-annotated classes). ${chord.main.dir}/classes/
+%chord.dlog.analysis.path    path    Path of directories containing program analyses in Datalog (i.e. *.datalog and *.dlog files).  ${chord.main.dir}/src/main/dlog/
+%chord.reuse.rels    bool    Construct program relations from BDDs stored on disk (from a previous run of Chord) whenever possible instead of re-computing them.    false
+%chord.print.results     bool    Print the results of program analyses in HTML. true
+

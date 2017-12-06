@@ -1,0 +1,98 @@
+# name=drrace-classification-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "E.dom"
+
+.bddvarorder E0xE1_C0xC1_A0_A1 
+
+###
+# Relations
+###
+
+# Use-After-Free races after applying all filters
+uaf_ToBeReported(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) input
+
+# Thread classification
+threadEntryEvent(t:A0) input
+threadPostEvent(t:A0) input
+threadEvent(t:A0) input
+
+# event thread t0 can reach native thread t1 through native thread creation.
+eventCreateThread(t0:A0,t1:A1) input	
+
+###
+# Constraints
+###
+
+# entry event thread and entry event thread
+uaf_EntryEvent_EntryEvent(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output 
+uaf_EntryEvent_EntryEvent(t1,c1,e1,t2,c2,e2) :- \
+	uaf_ToBeReported(t1,c1,e1,t2,c2,e2), \
+	threadEntryEvent(t1), threadEntryEvent(t2).
+
+###
+
+# entry event thread and post event thread
+uaf_EntryEvent_PostEvent(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_EntryEvent_PostEvent(t1,c1,e1,t2,c2,e2) :- \
+	uaf_ToBeReported(t1,c1,e1,t2,c2,e2), \
+	threadEntryEvent(t1), threadPostEvent(t2).
+	
+uaf_EntryEvent_PostEvent(t1,c1,e1,t2,c2,e2) :- \
+	uaf_ToBeReported(t1,c1,e1,t2,c2,e2), \
+	threadPostEvent(t1), threadEntryEvent(t2).
+
+###
+
+# post event thread and post event thread
+uaf_PostEvent_PostEvent(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_PostEvent_PostEvent(t1,c1,e1,t2,c2,e2) :- \
+	uaf_ToBeReported(t1,c1,e1,t2,c2,e2), \
+	threadPostEvent(t1), threadPostEvent(t2).
+
+###
+
+# event thread and native thread
+uaf_Event_Thread(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_Event_Thread(t1,c1,e1,t2,c2,e2) :- \
+	uaf_ToBeReported(t1,c1,e1,t2,c2,e2), \
+	threadEvent(t1), !threadEvent(t2).
+
+uaf_Event_Thread(t1,c1,e1,t2,c2,e2) :- \
+	uaf_ToBeReported(t1,c1,e1,t2,c2,e2), \
+	!threadEvent(t1), threadEvent(t2).
+
+###
+
+# event thread and native thread
+# event thread can reach native thread through native thread creation.
+uaf_Event_Thread_Reach(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_Event_Thread_Reach(t1,c1,e1,t2,c2,e2) :- \
+	uaf_Event_Thread(t1,c1,e1,t2,c2,e2), \
+	!threadEvent(t1), threadEvent(t2), \
+	eventCreateThread(t2,t1).
+
+uaf_Event_Thread_Reach(t1,c1,e1,t2,c2,e2) :- \
+	uaf_Event_Thread(t1,c1,e1,t2,c2,e2), \
+	threadEvent(t1), !threadEvent(t2), \
+	eventCreateThread(t1,t2).
+
+###
+
+# event thread and native thread
+# event thread cannot reach native thread through native thread creation.
+uaf_Event_Thread_NonReach(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_Event_Thread_NonReach(t1,c1,e1,t2,c2,e2) :- \
+	uaf_Event_Thread(t1,c1,e1,t2,c2,e2), \
+	!uaf_Event_Thread_Reach(t1,c1,e1,t2,c2,e2).
+
+###
+
+# native thread and native thread
+uaf_Thread_Thread(t1:A0,c1:C0,e1:E0,t2:A1,c2:C1,e2:E1) output
+uaf_Thread_Thread(t1,c1,e1,t2,c2,e2) :- \
+	uaf_ToBeReported(t1,c1,e1,t2,c2,e2), \
+	!threadEvent(t1), !threadEvent(t2).
+
+###

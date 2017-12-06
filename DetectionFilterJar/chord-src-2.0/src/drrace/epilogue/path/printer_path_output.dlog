@@ -1,0 +1,39 @@
+# name=drrace-printer-path-output-dlog
+
+.include "A.dom"
+.include "C.dom"
+.include "E.dom"
+
+.bddvarorder E0xE1_C0xC1_A0xA1xA2xA3
+
+###
+# Relations
+###
+
+printerInput(t0:A0,c0:C0,e0:E0,t1:A1,c1:C1,e1:E1) input
+threadReachableIncludeSelf(t0:A0,t1:A1) input
+TInOneComponentPair(t1:A0,t2:A1) input
+
+###
+# Constraints
+###
+
+# output_TT_TT(t0,t1,t2,t3)
+# t0 -> t1: thread of entry method -> thread of method containing Use statement
+# t2 -> t3: thread of entry method -> thread of method containing Free statement
+# t0 and t2 should be entry threads of the same component (t0 != t2)
+# or t0 = t2
+
+output_TT_TT(t0:A0,t1:A1,t2:A2,t3:A3) output
+
+output_TT_TT(t0,t1,t2,t3) :- \
+	printerInput(t1,_,_,t3,_,_), \
+	threadReachableIncludeSelf(t0,t1), threadReachableIncludeSelf(t2,t3), \
+	TInOneComponentPair(t0,t2).
+
+output_TT_TT(t0,t1,t2,t3) :- \
+	printerInput(t1,_,_,t3,_,_), \
+	threadReachableIncludeSelf(t0,t1), threadReachableIncludeSelf(t2,t3), \
+	t0=t2.
+	
+###
