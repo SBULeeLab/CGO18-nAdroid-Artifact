@@ -9,8 +9,6 @@ This repository contains the artifact for the [CGO'18] paper:
 
 ### How to Run
 ```sh
-$ # unpack nAdroid.tar.gz
-$ cd nAdroid
 $ ./run-all.sh       # run all the applications 
                      # (35 in total: 7 in train set, 20 in test set, 8 in injected set)
 $ ./run-all-test.sh  # run 3 applications 
@@ -19,7 +17,6 @@ $ ./run-all-test.sh  # run 3 applications
 Comments:
 
 Running all the applications costs around 30 hours in a host desktop with an 8-core cpu.
-
 I strongly recommend to run ./run-all-test.sh first to test the environment.
 
 ### Folder Description
